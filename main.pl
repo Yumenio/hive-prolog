@@ -60,7 +60,12 @@ tt():-
   new_hex("ant",1,1,0,0,0,Cell1),
   new_hex("ant",3,1,0,0,0,Cell2),
   % adjacent(Cell1,Cell2),
-  pprint(Cell1).
+  % pprint(Cell1).
+  init_player(1,player1),
+  print_hive(player1).
+
+hh():-
+  nth0(1,[1,2,3],J),
+  write(J).
 
 :-write("Welcome to pro-hive").
-

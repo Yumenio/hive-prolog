@@ -8,31 +8,21 @@ get_color(Hex,Color):-     arg(4,Hex,Color).
 get_height(Hex,Height):-   arg(5,Hex,Height).
 get_onGame(Hex,OnGame):-   arg(6,Hex,OnGame).
 
+printall([]):-
+  write("\n").
+printall([X|T]):-
+  write(X),
+  write(" "),
+  printall(T).
 
 pprint(Bug):-
-  get_type(Bug,Type),
-  write(Type),
-  write(" "),
-  
+  get_type(Bug, Type),  
   get_row(Bug,Row),
-  write(Row),
-  write(" "),
-  
   get_col(Bug,Col),
-  write(Col),
-  write(" "),
-  
   get_color(Bug,Color),
-  write(Color),
-  write(" "),
-  
   get_height(Bug,Height),
-  write(Height),
-  write(" "),
-  
   get_onGame(Bug,OnGame),
-  write(OnGame),
-  write("\n").
+  printall(["type:",Type,"    row:",Row,"    col:",Col,"    color:",Color,"    height:",Height,"    onGame:",OnGame]).
 
 print_hive([]).
 print_hive([Hive|T]):-
