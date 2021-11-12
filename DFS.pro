@@ -6,6 +6,13 @@ get_height(Hex,Height):-   arg(5,Hex,Height).
 get_onGame(Hex,OnGame):-   arg(6,Hex,OnGame).
 
 
+printall([]):-
+    write("\n").
+    printall([X|T]):-
+    write(X),
+    write(" "),
+    printall(T).
+
 adjacents(Hex1,Hex2):-
     get_row(Hex1,Row1),
     get_row(Hex2,Row2),
@@ -58,6 +65,10 @@ init_player2(Color,List):-
                 Grasshoper1, Grasshoper2, 
                 Grasshoper3, Beetle1, Beetle2, 
                 Spider1, Spider2, Mosquito, PillBug, Ladybug], List).
+
+players(Player1,Player2):-
+    player1(Player1),
+    player2(Player2).
 
 player1(List):- init_player1(1, List).
 player2(List):- init_player2(2, List).
@@ -122,8 +133,59 @@ dfs([Hex|Tail], OnGameCells, Visited, Result):-
     member(Hex, Visited),
     dfs(Tail, OnGameCells, Visited, Result).
 %% add all adjacents
-dfs([Hex|Tail], OnGameCells, Visited, Result):-
-    not(member(Hex, Visited)),
-    neighbours(Hex, OnGameCells, Nbs),
-    append(Nbs, Tail, ToVisit),
-    dfs(ToVisit, OnGameCells, [Hex|Visited], Result).
+dfs([H|T], L, Visited, T1):-
+    not(member(H, Visited)),
+    move(H, L, Nbs),
+    append(Nbs, T, ToVisit),
+    dfs(ToVisit, L, [H|Visited], T1).
+
+parse_input_put(Raw_input, Type, Col, Row):-
+    split_string(Raw_input,"\s","\s",Input),
+    nth0(0,Input,Type),
+    nth0(1,Input,C1),
+    nth0(2,Input,R1),
+    atom_number(C1,Col),
+    atom_number(R1,Row).
+
+place_hex(Type,Row,Col,Color,Player1,Player2,NewPlayer1).
+
+init_game():-
+    players(Player1,Player2),
+    game(Player1,Player2).
+
+game(Player1,Player2):-
+    turn_player1(Player1, Player2, NewPlayer1),
+    turn_player2(Player1, Player2, NewPlayer2),
+    game(NewPlayer1,NewPlayer2).
+
+turn_player1(Player1, Player2, NewPlayer1):-
+    read_line_to_string(user_input, Raw_input),
+    split_string(Raw_input,"\s","\s",Input),
+    ( % caso poner ficha
+    (length(Input,L1), L1 is 3,
+    parse_input_put(Raw_input,Type,Row,Col),
+    % printall([Type,Row,Col]),
+    place_hex(Type,Row,Col,1,Player1,Player2,NewPlayer1) );
+    
+    % caso mover ficha
+    (length(Input,L2), L2 is 2);
+    
+    % caso no válido
+    ( write("Invalid input, please try again\n") )
+    ).
+
+turn_player2(Player1, Player2, NewPlayer2):-
+    read_line_to_string(user_input, Raw_input),
+    split_string(Raw_input,"\s","\s",Input),
+    ( % caso poner ficha
+    (length(Input,L1), L1 is 3,
+    parse_input_put(Raw_input,Type,Row,Col),
+    % printall([Type,Row,Col]),
+    place_hex(Type,Row,Col,2,Player1,Player2,NewPlayer2) );
+    
+    % caso mover ficha
+    (length(Input,L2), L2 is 2);
+    
+    % caso no válido
+    ( write("Invalid input, please try again\n") )
+    ).
