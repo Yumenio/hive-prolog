@@ -19,23 +19,6 @@ adjacents(Hex1,Hex2):-
 
 
 new_hex(Type,Row,Col,Color,Height,OnGame, hex(Type,Row,Col,Color,Height, OnGame)).
-%new_hex("ant",       _,_,1,0,0,ant1).
-%new_hex("ant",       _,_,1,0,0,ant2).
-%new_hex("ant",       _,_,1,0,0,ant3).
-%new_hex("grasshoper",_,_,1,0,0,grasshoper1).
-%new_hex("grasshoper",_,_,1,0,0,grasshoper2).
-%new_hex("grasshoper",_,_,1,0,0,grasshoper3).
-%new_hex("beetle",    _,_,1,0,0,beetle1).
-%new_hex("beetle",    _,_,1,0,0,beetle2).
-%new_hex("spider",    _,_,1,0,0,spider1).
-%new_hex("spider",    _,_,1,0,0,spider2).
-%new_hex("mosquito",  _,_,1,0,0,mosquito).
-%new_hex("pilebough", _,_,1,0,0,pilebough).
-%new_hex("ladybug",   _,_,1,0,0,ladybug).
-
-% queen(Queen) :- new_hex("queen",     0,0,1,0,0, Queen).
-% ant(Ant) :- new_hex("ant",     0,0,1,0,0, Ant).
-% ?- ant(Ant), get_color(Ant, Type), write(Type).
 
 init_player1(Color,List):-
     new_hex("queen",     0,0,Color,0,1,Queen),
@@ -80,31 +63,67 @@ player1(List):- init_player1(1, List).
 player2(List):- init_player2(2, List).
 
 list_print([]):- write("\n").
-list_print([H|T]):- write(H), write(" "), list_print(T).
+list_print([Hex|Tail]):- write(Hex), write(" "), list_print(Tail).
 
 onGameSingle([], []).
-onGameSingle([H|T], List):- get_onGame(H, OnGame), ((OnGame is 1, onGameSingle(T, L), append([H], L, List)) ; onGameSingle(T, L), append([], L, List)).
+onGameSingle([Hex|Tail], List):- get_onGame(Hex, OnGame), ((OnGame is 1, onGameSingle(Tail, L), append([Hex], L, List)) ; onGameSingle(Tail, L), append([], L, List)).
 
-onGameCells(List):-player1(L1), player2(L2), onGameSingle(L1, L3), 
-                            onGameSingle(L2, L4), append(L3, L4, List).
+onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3), 
+                            onGameSingle(Player2, L4), append(L3, L4, List).
 
-llamar_dfs(V):- onGameCells(L), nth0(0, L, R), dfs(R, L, V).
+% test area
+%llamar_dfs(Adj):- onGameCells(L), nth0(0, L, R), dfs(R, L, V), nth0(0, V, Hex), write(Hex), get_adjacent(Hex, L, Adj).
+% llamar_dfs(Hex):- onGameCells(L), find_hex(1,1, L, Hex).
+%
 
+% devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve 0.
+find_hex(_, _, [], 0).
+find_hex(X, Y, [Hex|Tail], Hex):-
+    (get_row(Hex, Row1), 
+    get_col(Hex, Col1), 
+    Row1 is X, Col1 is Y ); find_hex(X, Y, Tail, Hex).
 
-move(_, [], _).
-move(H, [L|R], Nbs):- (adjacents(H, L), move(H, R, Nbs_), append([L], Nbs_, Nbs)); move(H, R, Nbs).
+% Devuelve un Hex adjacente a H.
+get_adjacent(_, [], 0).
+get_adjacent(Hex, [Adj|Tail], Adj):- adjacents(Hex, Adj); get_adjacent(Hex, Tail, Adj).
+
+free_bug_place(_, _, []):-1 is 2.
+free_bug_place(T, Color, [Hex|Tail]):-
+    (get_type(Hex, T1), get_onGame(Hex, OnGame), get_color(Hex, C),
+    C is Color, T1 is T, OnGame is 0) ; free_bug_place(T, Color, Tail).
+
+ocuppied( _, _, []).
+occupied(X, Y, [Hex|Tail]):-
+    (get_row(Hex, R1), get_col(Hex, C1),
+    R1 is X, C1 is Y) ; occupied(X, Y, Tail).
+
+valid_place(Color).
+
+% Cells es celdas en juegos de ambos players
+can_place_hex(Turn, Type, X, Y, Color, Cells):-
+    not(occupied(X, Y, Cells)),
+    free_bug_place(Type, Color, Cells), 
+    valid_place(Color).
+
+place_hex(Type, X, Y, Color, Place, Other, Player1_R, Player2_R):-
+    append(Place, Other, Cells),
+    can_place_hex(Type, X, Y, Color, Cells).
+
+% DFS stuffs
+neighbours(_, [], []).
+neighbours(Hex, [Nb|Tail], Nbs):- (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), append([Nb], Nbs_, Nbs)); neighbours(Hex, Tail, Nbs).
 %% dfs starting from a root 
-dfs(Root, L, T):-
-    dfs([Root], L, [], T).
+dfs(Root, OnGameCells, Result):-
+    dfs([Root], OnGameCells, [], Result).
 %% Done, all visited
-dfs([], _, L1, L1):- length(L1, T), write(T).
+dfs([], _, Result, Result):- length(Result, Length), write(Length).
 %% Skip elements that are already visited
-dfs([H|T], L, Visited, T1):-
-    member(H, Visited),
-    dfs(T, L, Visited, T1).
+dfs([Hex|Tail], OnGameCells, Visited, Result):-
+    member(Hex, Visited),
+    dfs(Tail, OnGameCells, Visited, Result).
 %% add all adjacents
-dfs([H|T], L, Visited, T1):-
-    not(member(H, Visited)),
-    move(H, L, Nbs),
-    append(Nbs, T, ToVisit),
-    dfs(ToVisit, L, [H|Visited], T1).
+dfs([Hex|Tail], OnGameCells, Visited, Result):-
+    not(member(Hex, Visited)),
+    neighbours(Hex, OnGameCells, Nbs),
+    append(Nbs, Tail, ToVisit),
+    dfs(ToVisit, OnGameCells, [Hex|Visited], Result).

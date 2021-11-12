@@ -10,9 +10,11 @@ reverse([X|Y],L):-reverse(Y,L1),concatenar(L1,[X],L).
 
 palindrome(X):-reverse(X,X).
 
+eliminar1(X, [X|Xs], Xs).
+eliminar1(X, [Y|Ys], [Y|Zs]):-eliminar1(X, Ys, Zs).
+
 subset([],_).
 subset([X|Xs],Y):-contains_x(X,Y),subset(Xs,Y).
-
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
   nth0(Index,List,OldElem,Transfer),
