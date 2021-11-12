@@ -108,13 +108,25 @@ occupied(X, Y, [Hex|Tail]):-
     (get_row(Hex, R1), get_col(Hex, C1),
     R1 is X, C1 is Y) ; occupied(X, Y, Tail).
 
-valid_place(Color).
+all_same_color(_,[]).
+all_same_color(Color,[H|T]):-
+    get_color(H,C1),
+    C1 is Color,
+    all_same_color(Color,T).
+
+valid_place(Cell,Cells):-
+    onGameSingle(Cells, OnGameCells),
+    neighbours(Cell,OnGameCells,Nbs),
+    get_color(Cell,C1),
+    all_same_color(C1,Nbs).
+
 
 % Cells es celdas en juegos de ambos players
 can_place_hex(Turn, Type, X, Y, Color, Cells):-
     not(occupied(X, Y, Cells)),
-    free_bug_place(Type, Color, Cells), 
-    valid_place(Color).
+    free_bug_place(Type, Color, Cells),
+    new_hex(Type,X,Y,Color,_,_,Hex),
+    valid_place(Hex, Cells).
 
 place_hex(Type, X, Y, Color, Place, Other, Player1_R, Player2_R):-
     append(Place, Other, Cells),
@@ -135,7 +147,7 @@ dfs([Hex|Tail], OnGameCells, Visited, Result):-
 %% add all adjacents
 dfs([H|T], L, Visited, T1):-
     not(member(H, Visited)),
-    move(H, L, Nbs),
+    neighbours(H, L, Nbs),
     append(Nbs, T, ToVisit),
     dfs(ToVisit, L, [H|Visited], T1).
 
