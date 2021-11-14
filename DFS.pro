@@ -143,7 +143,7 @@ valid_state(Cells, Turn, Color, Type):-
 
 find_free_bug(_, [], _, -1).
 find_free_bug(Type, [H|T], Index, Pos):-
-    (get_type(H, T1), T1 = Type, get_onGame(H, O), O is 1, Pos is Index); 
+    (get_type(H, T1), T1 = Type, get_onGame(H, O), O is 0, Pos is Index); 
     find_free_bug(Type, T, Index+1, Pos).
 
 
@@ -189,13 +189,13 @@ dfs([H|T], L, Visited, T1):-
     append(Nbs, T, ToVisit),
     dfs(ToVisit, L, [H|Visited], T1).
 
-parse_input_put(Raw_input, Type, Col, Row):-
+parse_input_place(Raw_input, Type, Row, Col):-
     split_string(Raw_input,"\s","\s",Input),
     nth0(0,Input,Type),
-    nth0(1,Input,C1),
-    nth0(2,Input,R1),
-    atom_number(C1,Col),
-    atom_number(R1,Row).
+    nth0(1,Input,R1),
+    nth0(2,Input,C1),
+    atom_number(R1,Row),
+    atom_number(C1,Col).
 
 
 init_game():-
@@ -203,8 +203,16 @@ init_game():-
     game(Player1,Player2, 1).
 
 game(Player1,Player2, Turn):-
+    onGameSingle(Player1,Board11),
+    printall(Board11),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
+    onGameSingle(NewPlayer1,Board12),
+    printall(Board12),
+    onGameSingle(Player2,Board21),
+    printall(Board21),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
+    onGameSingle(NewPlayer2,Board22),
+    printall(Board22),
     game(NewPlayer1,NewPlayer2, Turn+1).
 
 turn_player1(Turn, Player1, Player2, NewPlayer1):-
@@ -212,7 +220,7 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     split_string(Raw_input,"\s","\s",Input),
     ( % caso poner ficha
     (length(Input,L1), L1 is 3,
-    parse_input_put(Raw_input,Type,Row,Col),
+    parse_input_place(Raw_input,Type,Row,Col),
     % printall([Type,Row,Col]),
     place_hex(Turn, Type,Row,Col,1,Player1,Player2,NewPlayer1) );
     
@@ -228,7 +236,7 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     split_string(Raw_input,"\s","\s",Input),
     ( % caso poner ficha
     (length(Input,L1), L1 is 3,
-    parse_input_put(Raw_input,Type,Row,Col),
+    parse_input_place(Raw_input,Type,Row,Col),
     % printall([Type,Row,Col]),
     place_hex(Turn, Type,Row,Col,2,Player1,Player2,NewPlayer2) );
     
