@@ -164,6 +164,17 @@ place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player1_R, Player2_R):-
     replace_nth0(Player2, Pos, _, Hex, Player2_R), Player1_R is Player1
     ).
 
+second_placed(Hex, Player2, Player2_R):-
+    read_line_to_string(user_input, Raw_input),
+    split_string(Raw_input,"\s","\s",Input),
+    length(Input, L),
+    (L is 3, parse_input_place(Raw_input, Type, Row, Col),
+    new_hex(Type, Row, Col, 2, 0, 1, Hex_), adjacents(Hex, Hex_),
+    find_free_bug(Type, Player2, 0, Pos),
+    replace_nth0(Player2, Pos, _, Hex_, Player2_R);
+    (write("You did something wrong, try again"),
+    second_placed(Hex, Player2, Player2_R))).
+
 % DFS stuffs
 neighbours(_, [], []).
 neighbours(Hex, [Nb|Tail], Nbs):- (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), append([Nb], Nbs_, Nbs)); neighbours(Hex, Tail, Nbs).
@@ -183,15 +194,13 @@ dfs([H|T], L, Visited, T1):-
     append(Nbs, T, ToVisit),
     dfs(ToVisit, L, [H|Visited], T1).
 
-parse_input_put(Raw_input, Type, Col, Row):-
+parse_input_place(Raw_input, Type, Col, Row):-
     split_string(Raw_input,"\s","\s",Input),
     nth0(0,Input,Type),
     nth0(1,Input,C1),
     nth0(2,Input,R1),
     atom_number(C1,Col),
     atom_number(R1,Row).
-
-place_hex(Type,Row,Col,Color,Player1,Player2,NewPlayer1).
 
 init_game():-
     players(Player1,Player2),
@@ -207,7 +216,7 @@ turn_player1(Player1, Player2, NewPlayer1):-
     split_string(Raw_input,"\s","\s",Input),
     ( % caso poner ficha
     (length(Input,L1), L1 is 3,
-    parse_input_put(Raw_input,Type,Row,Col),
+    parse_input_place(Raw_input,Type,Row,Col),
     % printall([Type,Row,Col]),
     place_hex(Type,Row,Col,1,Player1,Player2,NewPlayer1) );
     
@@ -223,7 +232,7 @@ turn_player2(Player1, Player2, NewPlayer2):-
     split_string(Raw_input,"\s","\s",Input),
     ( % caso poner ficha
     (length(Input,L1), L1 is 3,
-    parse_input_put(Raw_input,Type,Row,Col),
+    parse_input_place(Raw_input,Type,Row,Col),
     % printall([Type,Row,Col]),
     place_hex(Type,Row,Col,2,Player1,Player2,NewPlayer2) );
     
