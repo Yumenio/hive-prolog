@@ -179,7 +179,7 @@ first_placed(Player1,Player1_R,Hex):-
     find_free_bug(Type,Player1,0,Pos),
     replace_nth0(Player1,Pos,_,Hex,Player1_R)
     );
-    (write("You did something wrong, try again"),
+    (write("You did something wrong, try again\n"),
     first_placed(Player1,Player1_R,Hex)).
 
 second_placed(Hex, Player2, Player2_R):-
@@ -195,7 +195,7 @@ second_placed(Hex, Player2, Player2_R):-
     
     ;
     
-    (write("You did something wrong, try again"),
+    (write("You did something wrong, try again\n"),
     second_placed(Hex, Player2, Player2_R))
     ).
 
