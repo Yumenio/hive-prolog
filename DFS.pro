@@ -197,6 +197,17 @@ parse_input_place(Raw_input, Type, Row, Col):-
     atom_number(R1,Row),
     atom_number(C1,Col).
 
+parse_input_move(Raw_input,R1,C1,R2,C2):-
+    split_string(Raw_input,"\s","\s",Input),
+    nth0(0,Input,R_1),
+    nth0(1,Input,C_1),
+    nth0(2,Input,R_2),
+    nth0(3,Input,C_2),
+    atom_number(R_1,R1),
+    atom_number(C_1,C1),
+    atom_number(R_2,R2),
+    atom_number(C_2,C2).
+
 
 init_game():-
     players(Player1,Player2),
@@ -225,7 +236,9 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     place_hex(Turn, Type,Row,Col,1,Player1,Player2,NewPlayer1) );
     
     % caso mover ficha
-    (length(Input,L2), L2 is 2);
+    (length(Input,L2), L2 is 4
+    parse_input_move(Raw_input,R1,C1,R2,C2)
+    );
     
     % caso no válido
     ( write("Invalid input, please try again\n") )
