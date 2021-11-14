@@ -174,12 +174,13 @@ second_placed(Hex, Player2, Player2_R):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
     length(Input, L),
-    (L is 3, parse_input_place(Raw_input, Type, Row, Col),
+    ((L is 3, parse_input_place(Raw_input, Type, Row, Col),
     new_hex(Type, Row, Col, 2, 0, 1, Hex_), adjacents(Hex, Hex_),
     find_free_bug(Type, Player2, 0, Pos),
-    replace_nth0(Player2, Pos, _, Hex_, Player2_R);
+    replace_nth0(Player2, Pos, _, Hex_, Player2_R));
     (write("You did something wrong, try again"),
     second_placed(Hex, Player2, Player2_R))).
+
 
 % DFS stuffs
 neighbours(_, [], []).
