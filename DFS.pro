@@ -19,14 +19,14 @@ replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
     nth0(Index,NewList,NewElem,Transfer).
 
-adjacents(Hex1,Hex2):-
+adjacents(Hex1,Hex2):- 
     get_row(Hex1,Row1),
     get_row(Hex2,Row2),
     get_col(Hex1,Col1),
     get_col(Hex2,Col2),
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
     (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
-    (Col1 is Col2-1, (Row1 is Row2 ; Row1 is Row2+1) ) ).
+    (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
 
 
 
@@ -34,15 +34,15 @@ adjacents(Hex1,Hex2):-
 new_hex(Type,Row,Col,Color,Height,OnGame, hex(Type,Row,Col,Color,Height, OnGame)).
 
 init_player1(Color,List):-
-    new_hex("queen",     0,0,Color,0,1,Queen),
+    new_hex("queen",     _,_,Color,0,0,Queen),
     new_hex("ant",       _,_,Color,0,0,Ant1),
     new_hex("ant",       _,_,Color,0,0,Ant2),
-    new_hex("ant",       0,1,Color,0,1,Ant3),
+    new_hex("ant",       _,_,Color,0,0,Ant3),
     new_hex("grasshoper",_,_,Color,0,0,Grasshoper1),
-    new_hex("grasshoper",1,1,Color,0,1,Grasshoper2),
+    new_hex("grasshoper",_,_,Color,0,0,Grasshoper2),
     new_hex("grasshoper",_,_,Color,0,0,Grasshoper3),
     new_hex("beetle",    _,_,Color,0,0,Beetle1),
-    new_hex("beetle",    0,2,Color,0,1,Beetle2),
+    new_hex("beetle",    _,_,Color,0,0,Beetle2),
     new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
@@ -53,16 +53,16 @@ init_player1(Color,List):-
                 Grasshoper3, Beetle1, Beetle2, 
                 Spider1, Spider2, Mosquito, PillBug, Ladybug], List).
 init_player2(Color,List):-
-    new_hex("queen",     2,1,Color,0,1,Queen),
+    new_hex("queen",     _,_,Color,0,0,Queen),
     new_hex("ant",       _,_,Color,0,0,Ant1),
-    new_hex("ant",       3,0,Color,0,1,Ant2),
+    new_hex("ant",       _,_,Color,0,0,Ant2),
     new_hex("ant",       _,_,Color,0,0,Ant3),
     new_hex("grasshoper",_,_,Color,0,0,Grasshoper1),
     new_hex("grasshoper",_,_,Color,0,0,Grasshoper2),
     new_hex("grasshoper",_,_,Color,0,0,Grasshoper3),
-    new_hex("beetle",    3,1,Color,0,1,Beetle1),
+    new_hex("beetle",    _,_,Color,0,0,Beetle1),
     new_hex("beetle",    _,_,Color,0,0,Beetle2),
-    new_hex("spider",    3,2,Color,0,1,Spider1),
+    new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
     new_hex("pillBug",   _,_,Color,0,0,PillBug),
@@ -170,16 +170,34 @@ place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
     replace_nth0(Player2, Pos, _, Hex, Player_R)
     ).
 
+first_placed(Player1,Player1_R,Hex):-
+    read_line_to_string(user_input,Raw_input),
+    split_string(Raw_input,"\s","\s",Input),
+    (length(Input,L), L is 3,
+    parse_input_place(Raw_input,Type,Row,Col),
+    new_hex(Type,Row,Col,1,0,1,Hex),
+    find_free_bug(Type,Player1,0,Pos),
+    replace_nth0(Player1,Pos,_,Hex,Player1_R)
+    );
+    (write("You did something wrong, try again"),
+    first_placed(Player1,Player1_R,Hex)).
+
 second_placed(Hex, Player2, Player2_R):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
-    length(Input, L),
-    (L is 3, parse_input_place(Raw_input, Type, Row, Col),
+    (
+    
+    (length(Input, L),
+    L is 3, parse_input_place(Raw_input, Type, Row, Col),
     new_hex(Type, Row, Col, 2, 0, 1, Hex_), adjacents(Hex, Hex_),
     find_free_bug(Type, Player2, 0, Pos),
-    replace_nth0(Player2, Pos, _, Hex_, Player2_R);
+    replace_nth0(Player2, Pos, _, Hex_, Player2_R) )
+    
+    ;
+    
     (write("You did something wrong, try again"),
-    second_placed(Hex, Player2, Player2_R))).
+    second_placed(Hex, Player2, Player2_R))
+    ).
 
 % DFS stuffs
 neighbours(_, [], []).
@@ -219,18 +237,27 @@ parse_input_move(Raw_input,R1,C1,R2,C2):-
     atom_number(R_2,R2),
     atom_number(C_2,C2).
 
+first_two_places(Player1,Player2,Player1_R,Player2_R):-
+    write("First turn:\n"),
+    first_placed(Player1,Player1_R,Hex),
+    write("Second turn:\n"),
+    second_placed(Hex,Player2,Player2_R).
+
 init_game():-
     players(Player1,Player2),
-    game(Player1,Player2, 1).
+    first_two_places(Player1,Player2,Player1_R,Player2_R),
+    game(Player1_R,Player2_R, 1).
 
 game(Player1,Player2, Turn):-
     onGameSingle(Player1,Board11),
-    printall(Board11),
+    % printall(Board11),
+    write("Turn Player1:\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
     onGameSingle(NewPlayer1,Board12),
     printall(Board12),
     onGameSingle(Player2,Board21),
-    printall(Board21),
+    % printall(Board21),
+    write("Turn Player2:\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
     onGameSingle(NewPlayer2,Board22),
     printall(Board22),
