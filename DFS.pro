@@ -288,7 +288,7 @@ game(Player1,Player2, Turn):-
     turn_player2(Turn, Player1, Player2, NewPlayer2),
     onGameSingle(NewPlayer2,Board22),
     printall(Board22),
-    sucesor(Turn,Turn1),
+    successor(Turn,Turn1),
     game(NewPlayer1,NewPlayer2, Turn1).
 
 
@@ -348,4 +348,3 @@ queen_move(Hex1, X, Y, Player, Player_R):-
     length(Result, L1), L1 is L-1,
     find_hex(Hex1, Player, 0, Pos1),
     replace_nth0(Player, Pos1, _, Hex2, Player_R).
-
