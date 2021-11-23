@@ -146,7 +146,7 @@ all_same_color(Color, [H|T]):-
 
 valid_place(Cell, Cells):- 
     onGameSingle(Cells, OnGameCells),
-    neighbours(Cell, OnGameCells, Nbs),!,
+    neighbours(Cell, OnGameCells, Nbs), !,
     length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
@@ -332,19 +332,63 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
 
 %---------------------- Moves ----------------------
 
-queen_move(Hex1, X, Y, Player, Player_R):-
-    onGameSingle(Player, OnGameCells),
+move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
+    % onGameCells(Player, Opponent, OnGameCells),
+    find_hex(X, Y, Player, Hex),
+    get_type(Hex, T), 
+    (T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R)).
+
+can_move(Hex1, OnGameCells):-
     length(OnGameCells, L),
-    get_color(Hex1, C), get_row(Hex1, Row), get_col(Hex1, Col),
-    new_hex("queen",X, Y, C, 0, 1, Hex2),
-    adjacents(Hex1, Hex2),
-    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, X, Y, C, _,_), 
     neighbours(Hex1, OnGameCells, Nbs),
-    nth0(Nbs, 0, Nb), 
-    new_hex("queen", Row, Col, C, 0, 0, New_Queen),
+    nth0(Nbs, 0, Nb),
+    new_hex(T, X, Y, C, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
-    replace_nth0(OnGameCells, Pos, _, New_Queen, OnGameCells1),
-    dfs(Nb, OnGameCells1, Result),
-    length(Result, L1), L1 is L-1,
-    find_hex(Hex1, Player, 0, Pos1),
-    replace_nth0(Player, Pos1, _, Hex2, Player_R).
+    replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
+    onGameSingle(OG, OGC),
+    dfs(Nb, OGC, Result),
+    length(Result, L1), L1 is L-1.
+
+
+queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_color(Hex1, C), 
+    new_hex("queen", X, Y, C, 0, 1, Hex2),
+    adjacents(Hex1, Hex2),
+    can_move(Hex1, OnGameCells),
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+    %Faltaria verificar que puede meterse ahi.
+
+ant_move(Hex1,X,Y,Player,Opponent,Player_R):-
+    onGameCells(Player,Opponent,OnGameCells),
+    not(occupied(X,Y,OnGameCells)),
+    free_adjacents(OnGameCells, OnGameCells, ValidMoves),
+    member([X,Y],ValidMoves),
+    find_hex(Hex1,Player,0,Pos),
+    get_color(Hex1,C),
+    new_hex("ant",X,Y,C,0,1,Hex2),
+    replace_nth0(Player,Pos,_,Hex2,Player_R).
+
+
+free_candidates([], _, _, []).
+free_candidates([H|T], AlreadyFound, OnGameCells, FreeCandidates):-
+    nth0(0,H,Row), nth0(1,H,Col),
+    
+    (not(member(H,AlreadyFound)),
+    not(occupied(Row,Col,OnGameCells)),
+    append([H],FreeCandidatesRec,FreeCandidates),
+    free_candidates(T,AlreadyFound,OnGameCells, FreeCandidatesRec) );
+    free_candidates(T,AlreadyFound,OnGameCells,FreeCandidates).
+
+
+free_adjacents([],[]).
+free_adjacents([Hex|T], OnGameCells, Adj):-
+    get_row(Hex,Row), get_col(Hex,Col),
+    successor(Row,R1), successor(R_1,Row), successor(Col,C1), successor(C_1, Col),
+    Candidates = [[R_1,Col],[R_1,C1],[Row,C_1],[Row,C1],[R1,C_1],[R1,Col]],
+    free_candidates(Candidates, Adj2, OnGameCells, FreeCandidates),
+    append(FreeCandidates,Adj2,Adj),
+    free_adjacents(T,OnGameCells,Adj2).
