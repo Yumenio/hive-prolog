@@ -7,6 +7,14 @@ get_color(Hex,Color):-     arg(4,Hex,Color).
 get_height(Hex,Height):-   arg(5,Hex,Height).
 get_onGame(Hex,OnGame):-   arg(6,Hex,OnGame).
 
+get_all(Hex, T, X, Y, C, H, O):- 
+    get_type(Hex,T),
+    get_row(Hex,X),
+    get_col(Hex,Y),
+    get_color(Hex,C),
+    get_height(Hex,H),
+    get_onGame(Hex,O).
+
 
 printall([]):-
     write("\n").
@@ -14,6 +22,8 @@ printall([]):-
     write(X),
     write(" "),
     printall(T).
+
+successor(X, Y):- Y is X + 1.
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
@@ -91,18 +101,31 @@ onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3),
 % test area
 %llamar_dfs(Adj):- onGameCells(L), nth0(0, L, R), dfs(R, L, V), nth0(0, V, Hex), write(Hex), get_adjacent(Hex, L, Adj).
 % llamar_dfs(Hex):- onGameCells(L), find_hex(1,1, L, Hex).
-%
+% :- debug.
+% compare(X, Y):- X = Y; X is Y.
+% compare_things([],[]).
+% compare_things([H1|T1], [H2|T2]):-write(H1), write(H2),compare(H1,H2), compare_things(T1, T2).
 
 % devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve 0.
-find_hex(_, _, [], 0).
+find_hex(_, _, [], _):- 2 is 1.
 find_hex(X, Y, [Hex|Tail], Hex):-
     (get_row(Hex, Row1), 
-    get_col(Hex, Col1), 
-    Row1 is X, Col1 is Y ); find_hex(X, Y, Tail, Hex).
+    get_col(Hex, Col1),
+    get_onGame(Hex, OG1),
+    Row1 is X, Col1 is Y, OG1 is 1 ); find_hex(X, Y, Tail, Hex).
+
+find_hex(_, [], _, -1):- 2 is 1.
+find_hex(Hex, [H|T], Index, Pos):-
+    get_all(Hex, Type, Row, Col, Color, Height, _),
+    get_all(H, Type1, Row1, Col1, Color1, Height1, O),
+    (Type1 is Type, Row1 is Row, Type1 is Type,
+    Col1 is Col, Color1 is Color, Height1 is Height, O is 1, Pos is Index); 
+    (successor(Index, Index1), find_hex(Hex, T, Index1, Pos)).
 
 % Devuelve un Hex adjacente a H.
 get_adjacent(_, [], 0).
 get_adjacent(Hex, [Adj|Tail], Adj):- adjacents(Hex, Adj); get_adjacent(Hex, Tail, Adj).
+
 
 free_bug_place(_, _, []):-1 is 2.
 free_bug_place(T, Color, [Hex|Tail]):-
@@ -120,18 +143,20 @@ all_same_color(Color, [H|T]):-
     C1 is Color, 
     all_same_color(Color, T).
 
-valid_place(Cell, Cells):- onGameSingle(Cells, OnGameCells),
-    neighbours(Cell, OnGameCells, Nbs),
+valid_place(Cell, Cells):- 
+    onGameSingle(Cells, OnGameCells), 
+    neighbours(Cell, OnGameCells, Nbs), !,
+    length(Nbs, L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
 queen_on_game([H|T], Color):-
     get_color(H, C), 
     get_onGame(H, O), 
-    get_type(H, T), 
-    (C is Color,
-    T = "queen",
+    get_type(H, T1), 
+    ((C is Color,
+    T1 = "queen",
     O is 1);
-    queen_on_game(T, Color).
+    queen_on_game(T, Color)).
 
 valid_state(Cells, Turn, Color, Type):-
     queen_on_game(Cells, Color); Turn < 4; (Turn is 4, Type = "queen").
@@ -141,18 +166,19 @@ valid_state(Cells, Turn, Color, Type):-
 %     (get_type(H, T), T is Type, length(T, L), Pos is L+1); 
 %     (find_free_bug(Type, T, Pos)).
 
+
 find_free_bug(_, [], _, -1).
 find_free_bug(Type, [H|T], Index, Pos):-
     (get_type(H, T1), T1 = Type, get_onGame(H, O), O is 0, Pos is Index); 
-    find_free_bug(Type, T, Index+1, Pos).
+    (successor(Index, Index1), find_free_bug(Type, T, Index1, Pos)).
 
 
 % Cells es celdas en juegos de ambos players
 can_place_hex(Turn, Type, X, Y, Color, Cells):-
     onGameSingle(Cells,OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    free_bug_place(Type, Color, Cells), 
-    new_hex(Type, X, Y, Color, _, _, Hex),
+    free_bug_place(Type, Color, Cells), !,
+    new_hex(Type, X, Y, Color, _, 0, Hex),
     valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
@@ -162,7 +188,6 @@ place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
     new_hex(Type, X, Y, Color, 0, 1, Hex),
     (Color is 1,
     find_free_bug(Type, Player1, 0, Pos),
-    write(Pos),
     replace_nth0(Player1, Pos, _, Hex, Player_R)
     ;
     Color is 2,
@@ -179,7 +204,7 @@ first_placed(Player1,Player1_R,Hex):-
     find_free_bug(Type,Player1,0,Pos),
     replace_nth0(Player1,Pos,_,Hex,Player1_R)
     );
-    (write("You did something wrong, try again"),
+    (write("You did something wrong, try again\n"),
     first_placed(Player1,Player1_R,Hex)).
 
 second_placed(Hex, Player2, Player2_R):-
@@ -189,20 +214,23 @@ second_placed(Hex, Player2, Player2_R):-
     ((L is 3, parse_input_place(Raw_input, Type, Row, Col),
     new_hex(Type, Row, Col, 2, 0, 1, Hex_), adjacents(Hex, Hex_),
     find_free_bug(Type, Player2, 0, Pos),
-    replace_nth0(Player2, Pos, _, Hex_, Player2_R));
-    (write("You did something wrong, try again"),
+    replace_nth0(Player2, Pos, _, Hex_, Player2_R) );
+    (write("You did something wrong, try again\n"),
     second_placed(Hex, Player2, Player2_R))
     ).
 
 
 % DFS stuffs
 neighbours(_, [], []).
-neighbours(Hex, [Nb|Tail], Nbs):- (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), append([Nb], Nbs_, Nbs)); neighbours(Hex, Tail, Nbs).
+neighbours(Hex, [Nb|Tail], Nbs):- 
+    (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), 
+    append([Nb], Nbs_, Nbs)); 
+    neighbours(Hex, Tail, Nbs).
 %% dfs starting from a root 
 dfs(Root, OnGameCells, Result):-
     dfs([Root], OnGameCells, [], Result).
 %% Done, all visited
-dfs([], _, Result, Result):- length(Result, Length), write(Length).
+dfs([], _, Result, Result).
 %% Skip elements that are already visited
 dfs([Hex|Tail], OnGameCells, Visited, Result):-
     member(Hex, Visited),
@@ -274,7 +302,8 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     );
     
     % caso no válido
-    ( write("Invalid input, please try again\n") )
+    (write("\nInvalid input, please try again\n"),
+    turn_player1(Turn, Player1, Player2, NewPlayer1))
     ).
 
 turn_player2(Turn, Player1, Player2, NewPlayer2):-
@@ -290,5 +319,27 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     (length(Input,L2), L2 is 2);
     
     % caso no válido
-    ( write("Invalid input, please try again\n") )
+    (write("\nInvalid input, please try again\n"),
+    turn_player2(Turn, Player1, Player2, NewPlayer2))
     ).
+
+
+%---------------------- Moves ----------------------
+
+queen_move(Hex1, X, Y, Player, Player_R):-
+    onGameSingle(Player, OnGameCells),
+    length(OnGameCells, L),
+    get_color(Hex1, C), get_row(Hex1, Row), get_col(Hex1, Col),
+    new_hex("queen",X, Y, C, 0, 1, Hex2),
+    adjacents(Hex1, Hex2),
+    not(occupied(X, Y, OnGameCells)),
+    neighbours(Hex1, OnGameCells, Nbs),
+    nth0(Nbs, 0, Nb), 
+    new_hex("queen", Row, Col, C, 0, 0, New_Queen),
+    find_hex(Hex1, OnGameCells, 0, Pos),
+    replace_nth0(OnGameCells, Pos, _, New_Queen, OnGameCells1),
+    dfs(Nb, OnGameCells1, Result),
+    length(Result, L1), L1 is L-1,
+    find_hex(Hex1, Player, 0, Pos1),
+    replace_nth0(Player, Pos1, _, Hex2, Player_R).
+
