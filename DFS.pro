@@ -145,9 +145,9 @@ all_same_color(Color, [H|T]):-
     all_same_color(Color, T).
 
 valid_place(Cell, Cells):- 
-    onGameSingle(Cells, OnGameCells), 
+    onGameSingle(Cells, OnGameCells),
     neighbours(Cell, OnGameCells, Nbs), !,
-    length(Nbs, L), L > 0,
+    length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
 p(X):- write(X).
