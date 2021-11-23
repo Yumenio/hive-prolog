@@ -24,12 +24,7 @@ printall([X|T]):-
     write(" "),
     printall(T).
 
-<<<<<<< HEAD
 successor(X, Y):- Y is X + 1.
-=======
-sucesor(X,Y):- Y is X+1.
-
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
@@ -149,16 +144,10 @@ all_same_color(Color, [H|T]):-
     C1 is Color, 
     all_same_color(Color, T).
 
-<<<<<<< HEAD
 valid_place(Cell, Cells):- 
-    onGameSingle(Cells, OnGameCells), 
-    neighbours(Cell, OnGameCells, Nbs), !,
-    length(Nbs, L), L > 0,
-=======
-valid_place(Cell, Cells):- onGameSingle(Cells, OnGameCells),
+    onGameSingle(Cells, OnGameCells),
     neighbours(Cell, OnGameCells, Nbs),!,
     length(Nbs,L), L > 0,
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
 p(X):- write(X).
@@ -166,13 +155,8 @@ p(X):- write(X).
 queen_on_game([H|T], Color):-
     get_color(H, C),
     get_onGame(H, O), 
-<<<<<<< HEAD
     get_type(H, T1), 
     ((C is Color,
-=======
-    get_type(H, T1),
-    (C is Color,
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
     T1 = "queen",
     O is 1);
     queen_on_game(T, Color)).
@@ -196,13 +180,8 @@ find_free_bug(Type, [H|T], Index, Pos):-
 can_place_hex(Turn, Type, X, Y, Color, Cells):-
     onGameSingle(Cells,OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-<<<<<<< HEAD
     free_bug_place(Type, Color, Cells), !,
     new_hex(Type, X, Y, Color, _, 0, Hex),
-=======
-    free_bug_place(Type, Color, Cells),!,
-    new_hex(Type, X, Y, Color, _, _, Hex),
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
     valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
@@ -329,16 +308,9 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     );
     
     % caso no válido
-<<<<<<< HEAD
     (write("\nInvalid input, please try again\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1))
     ).
-=======
-    ( write("Invalid input, please try again\n"),
-    turn_player1(Turn, Player1, Player2, NewPlayer1)
-    )).
-
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
 
 turn_player2(Turn, Player1, Player2, NewPlayer2):-
     read_line_to_string(user_input, Raw_input),
@@ -353,14 +325,8 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     (length(Input,L2), L2 is 2);
     
     % caso no válido
-<<<<<<< HEAD
     (write("\nInvalid input, please try again\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2))
-=======
-    ( write("Invalid input, please try again\n"),
-    turn_player2(Turn,Player1,Player2,NewPlayer2)
-    )
->>>>>>> 1ff0341ccd941e57f3d463f505843ca20ac1a6d4
     ).
 
 
