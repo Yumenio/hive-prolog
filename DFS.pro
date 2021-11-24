@@ -362,3 +362,60 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.
 
+vecino(Hex, Cells, Voids, A):-
+    get_all(Hex, _, X1, Y1, _, _, _),
+    adjacents(X, Y, X1, Y1), not(occupied(X, Y, Cells)), append([X], [Y], A),
+    not(member(A, Voids)).
+
+vecinos(Hex,  Empties, Cells, Vecinos):-
+    findall(Nb, vecino(Hex, Cells, Empties, Nb), Vecinos).
+
+vecinos_void([],_, _, []).
+vecinos_void([Hex|Tail], Empties, Cells, V):-
+    vecinos(Hex, Empties, Cells, V1), 
+    append(Empties, V1, Empties1),
+    vecinos_void(Tail, Empties1, Cells, V2), 
+    append(V1, V2, V).
+    
+
+test_vecino(V):-
+    new_hex("queen", 1, 1, 1, 0, 1, Queen1),
+    new_hex("queen", 2, 1, 1, 0, 1, Queen2),
+    new_hex("queen", 1, 2, 1, 0, 1, Queen3),
+    Cells = [Queen1, Queen2, Queen3],
+    vecinos_void(Cells, [], Cells, V),
+    write_all(V).
+
+write_all([]).
+write_all([Head|Tail]):-
+    write(Head), write_all(Tail).
+
+adjacents(Row1, Col1, Row2, Col2):- 
+    ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
+    (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
+    (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
+
+neighbours(_, _, [], []).
+neighbours(X, Y, [Nb|Tail], Nbs):- 
+    nth0( 0, Nb, X1),
+    nth0( 1, Nb, Y1),
+    (adjacents(X, Y, X1, Y1), neighbours(X, Y, Tail, Nbs_), 
+    append([Nb], Nbs_, Nbs)); 
+    neighbours(X, Y, Tail, Nbs).
+%% dfs starting from a root 
+dfs_path(X, Y, Deep, Cells, Result):-
+    dfs_path([[X, Y]], Deep, Cells, [], Result).
+%% Done, all visited
+dfs_path([], _, _, Result, Result).
+%% Skip elements that are already visited
+dfs_path([Hex|Tail], Cells, Visited, Result):-
+    member(Hex, Visited),
+    dfs(Tail, Cells, Visited, Result).
+%% add all adjacents
+dfs_path([H|T], L, Visited, T1):-
+    not(member(H, Visited)),
+    nth0( 0, Nb, X1),
+    nth0( 1, Nb, Y1),
+    neighbours(X1, Y1, L, Nbs),
+    append(Nbs, T, ToVisit),
+    dfs(ToVisit, L, [H|Visited], T1).
