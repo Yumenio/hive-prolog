@@ -30,6 +30,11 @@ replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
     nth0(Index,NewList,NewElem,Transfer).
 
+reverssed([X],[X]).
+reverssed([X|Y],L2):-
+  reverssed(Y,L2R),
+  append(L2R,[X],L2).
+
 adjacents(Hex1,Hex2):- 
     get_row(Hex1,Row1),
     get_row(Hex2,Row2),
@@ -406,16 +411,17 @@ neighbours(X, Y, [Nb|Tail], Nbs):-
 dfs_path(X, Y, Deep, Cells, Result):-
     dfs_path([[X, Y]], Deep, Cells, [], Result).
 %% Done, all visited
-dfs_path([], _, _, Result, Result).
+dfs_path(_, 0, _, Result, Result).
 %% Skip elements that are already visited
-dfs_path([Hex|Tail], Cells, Visited, Result):-
+dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
     member(Hex, Visited),
-    dfs(Tail, Cells, Visited, Result).
+    dfs_path(Tail, Deep, Cells, Visited, Result).
 %% add all adjacents
-dfs_path([H|T], L, Visited, T1):-
+dfs_path([H|T], Deep, L, Visited, T1):-
     not(member(H, Visited)),
-    nth0( 0, Nb, X1),
-    nth0( 1, Nb, Y1),
+    nth0( 0, H, X1),
+    nth0( 1, H, Y1),
     neighbours(X1, Y1, L, Nbs),
     append(Nbs, T, ToVisit),
-    dfs(ToVisit, L, [H|Visited], T1).
+    successor(Deep1,Deep),
+    dfs_path(ToVisit, Deep1, L, [H|Visited], T1).
