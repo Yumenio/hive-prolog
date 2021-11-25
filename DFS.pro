@@ -17,7 +17,6 @@ get_all(Hex, T, X, Y, C, H, O):-
 
 
 printall([]):-
-    write("asd"),
     write("\n").
 printall([X|T]):-
     write(X),
@@ -26,10 +25,19 @@ printall([X|T]):-
 
 successor(X, Y):- Y is X + 1.
 predecessor(X, Y):- Y is X - 1.
+halve(L,R):- R is L/2 + 1.
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
     nth0(Index,NewList,NewElem,Transfer).
+
+reverssed([X],[X]).
+reverssed([X|Y],L2):-
+    reverssed(Y,L2R),
+    append(L2R,[X],L2).
+
+reverse_all(L, R):-
+    maplist(reverse(),L,R).
 
 adjacents(Hex1,Hex2):- 
     get_row(Hex1,Row1),
@@ -109,12 +117,15 @@ onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3),
 % compare_things([H1|T1], [H2|T2]):-write(H1), write(H2),compare(H1,H2), compare_things(T1, T2).
 
 % devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve 0.
-find_hex(_, _, [], _):- 2 is 1.
-find_hex(X, Y, [Hex|Tail], Hex):-
-    (get_row(Hex, Row1), 
-    get_col(Hex, Col1),
-    get_onGame(Hex, OG1),
-    Row1 is X, Col1 is Y, OG1 is 1 ); find_hex(X, Y, Tail, Hex).
+find_hex(_, [], _):- 2 is 1.
+find_hex(Pos, [Hex|Tail], Hex1):-
+    length(Pos, L), L is 2,
+    nth0(0, Pos, X),
+    nth0(1, Pos, Y),
+    ((get_all(Hex, _, Row1, Col1, _, _, OG1),
+    Row1 is X, Col1 is Y, OG1 is 1, 
+    Hex1 = Hex); 
+    find_hex(Pos, Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -134,7 +145,7 @@ free_bug_place(T, Color, [Hex|Tail]):-
     (get_type(Hex, T1), get_onGame(Hex, OnGame), get_color(Hex, C),
     C is Color, T1 = T, OnGame is 0) ; free_bug_place(T, Color, Tail).
 
-ocuppied( _, _, []).
+occupied( _, _, []):-2 is 1.
 occupied(X, Y, [Hex|Tail]):-
     (get_row(Hex, R1), get_col(Hex, C1),
     R1 is X, C1 is Y ) ; occupied(X, Y, Tail).
@@ -277,13 +288,13 @@ init_game():-
     game(Player1_R,Player2_R, 2).
 
 game(Player1,Player2, Turn):-
-    onGameSingle(Player1,Board11),
+    % onGameSingle(Player1,Board11),
     % printall(Board11),
     write("Turn Player1:\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
     onGameSingle(NewPlayer1,Board12),
     printall(Board12),
-    onGameSingle(Player2,Board21),
+    % onGameSingle(Player2,Board21),
     % printall(Board21),
     write("Turn Player2:\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
@@ -305,7 +316,8 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     
     % caso mover ficha
     (length(Input,L2), L2 is 4,
-    parse_input_move(Raw_input,R1,C1,R2,C2)
+    parse_input_move(Raw_input,R1,C1,R2,C2),
+    move_hex(R1, C1, R2, C2, Player1, Player2, NewPlayer1)
     );
     
     % caso no válido
@@ -323,8 +335,11 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     place_hex(Turn, Type,Row,Col,2,Player1,Player2,NewPlayer2) );
     
     % caso mover ficha
-    (length(Input,L2), L2 is 2);
-    
+    (length(Input,L2), L2 is 4,
+    parse_input_move(Raw_input,R1,C1,R2,C2),
+    move_hex(R1, C1, R2, C2, Player2, Player1, NewPlayer2)
+    );
+
     % caso no válido
     (write("\nInvalid input, please try again\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2))
@@ -335,9 +350,10 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
 
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     % onGameCells(Player, Opponent, OnGameCells),
-    find_hex(X, Y, Player, Hex),
+    find_hex([X, Y], Player, Hex),
     get_type(Hex, T), 
-    (T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R)).
+    ((T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 can_move(Hex1, OnGameCells):-
     length(OnGameCells, L),
@@ -363,6 +379,19 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.
 
+ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    write("ant move \n"),
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, Row, Col, C, _, OG1),
+    new_hex(T, X, Y, C, 0, 1, Hex2),
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    length(Free_Cells, L),
+    halve(L, L2),
+    find_all_paths(OnGameCells, Row, Col, L2, Paths),
+    write_all(Paths).
+
+
 vecino(Hex, Cells, Voids, A):-
     get_all(Hex, _, X1, Y1, _, _, _),
     adjacents(X, Y, X1, Y1), not(occupied(X, Y, Cells)), append([X], [Y], A),
@@ -378,16 +407,19 @@ vecinos_void([Hex|Tail], Empties, Cells, V):-
     vecinos_void(Tail, Empties1, Cells, V2), 
     append(V1, V2, V).
     
-    
-test_vecino(V):-
-    new_hex("queen", 1, 1, 1, 0, 1, Queen1),
-    new_hex("queen", 2, 1, 1, 0, 1, Queen2),
-    new_hex("queen", 1, 2, 1, 0, 1, Queen3),
-    Cells = [Queen1, Queen2, Queen3],
-    vecinos_void(Cells, [], Cells, A),
-    findall(P, dfs_path(1, 1, 4, A, _, P), V1),
-    write_all(V1),
-    write_all(V).
+find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    findall(P, dfs_path(X, Y, Depth, Free_Cells, _, P), V1),
+    % write_all(V1),
+    list_to_set(V1, P1),
+    reverse_all(P1, Paths).
+
+find_all_paths(_,_,_,1,[]).
+find_all_paths(OnGameCells, X, Y, Depth, Paths):-
+    find_depth_paths(OnGameCells,X,Y,Depth,P1),
+    predecessor(Depth,D1),
+    find_all_paths(OnGameCells, X, Y, D1, P2),
+    append(P1,P2,Paths).
 
 
 write_all([]):-write("\n").
@@ -412,12 +444,10 @@ dfs_path(X, Y, Deep, Cells, _, Result):-
     dfs_path([[X, Y]], Deep, Cells, [], Result1),
     list_to_set(Result1, Result).
 %% Done, all visited
-dfs_path(_, 0, _, Result, Result):-
-    write("termino\n").
+dfs_path(_, 0, _, Result, Result).
 %% Skip elements that are already visited
 dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
     member(Hex, Visited),
-    write("entre al de quitar los que ya estan "), write(Hex), write("\n"),
     dfs_path(Tail, Deep, Cells, Visited, Result).
 %% add all adjacents
 dfs_path([H|T], Deep, L, Visited, T1):-
@@ -428,5 +458,4 @@ dfs_path([H|T], Deep, L, Visited, T1):-
     neighbours(X1, Y1, L, V1, Nbs),
     % append(Nbs, T, ToVisit),
     predecessor(Deep, Deep1),
-    dfs_path(Nbs, Deep1, L, [H|Visited], T1), 
-    write("resulatado llamado recursivo "), write(T1), write("\n").
+    dfs_path(Nbs, Deep1, L, [H|Visited], T1).

@@ -19,3 +19,8 @@ subset([X|Xs],Y):-contains_x(X,Y),subset(Xs,Y).
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
   nth0(Index,List,OldElem,Transfer),
   nth0(Index,NewList,NewElem,Transfer).
+
+reverssed([X],[X]).
+reverssed([X|Y],L2):-
+  reverssed(Y,L2R),
+  append(L2R,[X],L2).
