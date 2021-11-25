@@ -17,7 +17,6 @@ get_all(Hex, T, X, Y, C, H, O):-
 
 
 printall([]):-
-    write("asd"),
     write("\n").
 printall([X|T]):-
     write(X),
@@ -26,6 +25,7 @@ printall([X|T]):-
 
 successor(X, Y):- Y is X + 1.
 predecessor(X, Y):- Y is X - 1.
+halve(L,R):- R is L/2 + 1.
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :-
     nth0(Index,List,OldElem,Transfer),
@@ -35,6 +35,9 @@ reverssed([X],[X]).
 reverssed([X|Y],L2):-
   reverssed(Y,L2R),
   append(L2R,[X],L2).
+
+reverse_all(L, R):-
+    maplist(reverse(),L,R).
 
 adjacents(Hex1,Hex2):- 
     get_row(Hex1,Row1),
@@ -342,7 +345,8 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     % onGameCells(Player, Opponent, OnGameCells),
     find_hex(X, Y, Player, Hex),
     get_type(Hex, T), 
-    (T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R)).
+    (T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R)),
+    (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R)).
 
 can_move(Hex1, OnGameCells):-
     length(OnGameCells, L),
@@ -368,6 +372,18 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.
 
+ant_move(Hex1,X,Y,Player,Opponent,Player_R):-
+    onGameCells(Player,Opponent,OnGameCells),
+    not(occuppied(X,Y,OnGameCells)),
+    get_color(Hex1,C),
+    new_hex("ant", X,Y,C,0,1,Hex2),
+    vecinos_void(OnGameCells,[],OnGameCells,Free_Cells),
+    length(Free_Cells, L),
+    halve(L,L2),
+    find_all_paths(OnGameCells,X,Y,L2,Paths),
+    write_all(Paths).
+
+
 vecino(Hex, Cells, Voids, A):-
     get_all(Hex, _, X1, Y1, _, _, _),
     adjacents(X, Y, X1, Y1), not(occupied(X, Y, Cells)), append([X], [Y], A),
@@ -383,17 +399,18 @@ vecinos_void([Hex|Tail], Empties, Cells, V):-
     vecinos_void(Tail, Empties1, Cells, V2), 
     append(V1, V2, V).
     
-:-debug.
-test_vecino(V):-
-    new_hex("queen", 1, 1, 1, 0, 1, Queen1),
-    new_hex("queen", 2, 1, 1, 0, 1, Queen2),
-    new_hex("queen", 1, 2, 1, 0, 1, Queen3),
-    Cells = [Queen1, Queen2, Queen3],
-    vecinos_void(Cells, [], Cells, A),
-    findall(P, dfs_path(1, 1, 4, A, _, P), V1),
-    write_all(V1),
-    list_to_set(V1, V),
-    write_all(V).
+find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    findall(P, dfs_path(X, Y, Depth, Free_Cells, _, P), V1),
+    % write_all(V1),
+    list_to_set(V1, Paths).
+
+find_all_paths(_,_,_,1,[]).
+find_all_paths(OnGameCells, X, Y, Depth, Paths):-
+    find_depth_paths(OnGameCells,X,Y,Depth,P1),
+    predecessor(Depth,D1),
+    find_all_paths(OnGameCells, X, Y, D1, P2),
+    append(P1,P2,Paths).
 
 
 write_all([]):-write("\n").
@@ -415,7 +432,9 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
     neighbours(X, Y, Tail, Visited, Nbs).
 %% dfs starting from a root 
 dfs_path(X, Y, Deep, Cells, _, Result):-
-    dfs_path([[X, Y]], Deep, Cells, [], Result).
+    dfs_path([[X, Y]], Deep, Cells, [], Result1),
+    list_to_set(Result1,Result2),
+    reverse_all(Result2,Result).
 %% Done, all visited
 dfs_path(_, 0, _, Result, Result):-
     write("termino\n").
@@ -425,17 +444,6 @@ dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
     write("entre al de quitar los que ya estan "), write(Hex), write("\n"),
     dfs_path(Tail, Deep, Cells, Visited, Result).
 %% add all adjacents
-% dfs_path([H|T], Deep, L, Visited, T1):-
-%     not(member(H, Visited)),
-%     write("recursivo "), write(H), write("\n"),
-%     nth0( 0, H, X1),
-%     nth0( 1, H, Y1),
-%     append(Visited, T, V1),
-%     neighbours(X1, Y1, L, V1, Nbs),
-%     append(Nbs, T, ToVisit),
-%     predecessor(Deep, Deep1),
-%     dfs_path(ToVisit, Deep1, L, [H|Visited], T1), 
-%     write("resulatado llamado recursivo "), write(T1), write("\n").
 dfs_path([H|T], Deep, L, Visited, T1):-
     not(member(H, Visited)),
     write("recursivo "), write(H), write("\n"),
