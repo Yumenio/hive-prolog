@@ -378,7 +378,7 @@ vecinos_void([Hex|Tail], Empties, Cells, V):-
     vecinos_void(Tail, Empties1, Cells, V2), 
     append(V1, V2, V).
     
-:-debug.
+    
 test_vecino(V):-
     new_hex("queen", 1, 1, 1, 0, 1, Queen1),
     new_hex("queen", 2, 1, 1, 0, 1, Queen2),
@@ -387,7 +387,6 @@ test_vecino(V):-
     vecinos_void(Cells, [], Cells, A),
     findall(P, dfs_path(1, 1, 4, A, _, P), V1),
     write_all(V1),
-    list_to_set(V1, V),
     write_all(V).
 
 
@@ -410,7 +409,8 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
     neighbours(X, Y, Tail, Visited, Nbs).
 %% dfs starting from a root 
 dfs_path(X, Y, Deep, Cells, _, Result):-
-    dfs_path([[X, Y]], Deep, Cells, [], Result).
+    dfs_path([[X, Y]], Deep, Cells, [], Result1),
+    list_to_set(Result1, Result).
 %% Done, all visited
 dfs_path(_, 0, _, Result, Result):-
     write("termino\n").
@@ -420,20 +420,8 @@ dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
     write("entre al de quitar los que ya estan "), write(Hex), write("\n"),
     dfs_path(Tail, Deep, Cells, Visited, Result).
 %% add all adjacents
-% dfs_path([H|T], Deep, L, Visited, T1):-
-%     not(member(H, Visited)),
-%     write("recursivo "), write(H), write("\n"),
-%     nth0( 0, H, X1),
-%     nth0( 1, H, Y1),
-%     append(Visited, T, V1),
-%     neighbours(X1, Y1, L, V1, Nbs),
-%     append(Nbs, T, ToVisit),
-%     predecessor(Deep, Deep1),
-%     dfs_path(ToVisit, Deep1, L, [H|Visited], T1), 
-%     write("resulatado llamado recursivo "), write(T1), write("\n").
 dfs_path([H|T], Deep, L, Visited, T1):-
     not(member(H, Visited)),
-    write("recursivo "), write(H), write("\n"),
     nth0( 0, H, X1),
     nth0( 1, H, Y1),
     append(Visited, T, V1),
