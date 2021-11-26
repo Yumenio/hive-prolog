@@ -33,8 +33,8 @@ replace_nth0(List, Index, OldElem, NewElem, NewList) :-
 
 reverssed([X],[X]).
 reverssed([X|Y],L2):-
-  reverssed(Y,L2R),
-  append(L2R,[X],L2).
+    reverssed(Y,L2R),
+    append(L2R,[X],L2).
 
 reverse_all(L, R):-
     maplist(reverse(),L,R).
@@ -118,18 +118,14 @@ onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3),
 
 % devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve 0.
 find_hex(_, [], _):- 2 is 1.
-find_hex( Pos, [Hex|Tail], Hex1):-
-    length(Pos,L), L is 2,
-    nth0(0,Pos,X),
-    nth0(1,Pos,Y),
-    (
-    (get_row(Hex, Row1),
-    get_col(Hex, Col1),
-    get_onGame(Hex, OG1),
-    Row1 is X, Col1 is Y, OG1 is 1, Hex1 = Hex )
-    ;
-    (find_hex(Pos, Tail, Hex1))
-    ).
+find_hex(Pos, [Hex|Tail], Hex1):-
+    length(Pos, L), L is 2,
+    nth0(0, Pos, X),
+    nth0(1, Pos, Y),
+    ((get_all(Hex, _, Row1, Col1, _, _, OG1),
+    Row1 is X, Col1 is Y, OG1 is 1, 
+    Hex1 = Hex); 
+    find_hex(Pos, Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -292,13 +288,13 @@ init_game():-
     game(Player1_R,Player2_R, 2).
 
 game(Player1,Player2, Turn):-
-    onGameSingle(Player1,Board11),
+    % onGameSingle(Player1,Board11),
     % printall(Board11),
     write("Turn Player1:\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
     onGameSingle(NewPlayer1,Board12),
     printall(Board12),
-    onGameSingle(Player2,Board21),
+    % onGameSingle(Player2,Board21),
     % printall(Board21),
     write("Turn Player2:\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
@@ -321,7 +317,7 @@ turn_player1(Turn, Player1, Player2, NewPlayer1):-
     % caso mover ficha
     (length(Input,L2), L2 is 4,
     parse_input_move(Raw_input,R1,C1,R2,C2),
-    move_hex(R1,C1,R2,C2, Player1,Player2,NewPlayer1)
+    move_hex(R1, C1, R2, C2, Player1, Player2, NewPlayer1)
     );
     
     % caso no válido
@@ -341,9 +337,9 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     % caso mover ficha
     (length(Input,L2), L2 is 4,
     parse_input_move(Raw_input,R1,C1,R2,C2),
-    move_hex(R1,C1,R2,C2,Player2,Player1,NewPlayer2)
+    move_hex(R1, C1, R2, C2, Player2, Player1, NewPlayer2)
     );
-    
+
     % caso no válido
     (write("\nInvalid input, please try again\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2))
@@ -354,14 +350,10 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
 
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     % onGameCells(Player, Opponent, OnGameCells),
-    write("aber\n"),
-    find_hex( [X,Y], Player, Hex),
-    write("kojan\n"),
-    get_type(Hex, T),
-    (
-    (T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
-    (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R))
-    ).
+    find_hex([X, Y], Player, Hex),
+    get_type(Hex, T), 
+    ((T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 can_move(Hex1, OnGameCells):-
     length(OnGameCells, L),
@@ -387,15 +379,15 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.
 
-ant_move(Hex1,X,Y,Player,Opponent,Player_R):-
-    write("moviendo hormiga"),
+ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    write("ant move \n"),
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, Row, Col, C, _, _),
+    get_all(Hex1, T, Row, Col, C, _, OG1),
     new_hex(T, X, Y, C, 0, 1, Hex2),
     vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
     length(Free_Cells, L),
-    halve(L,L2),
+    halve(L, L2),
     find_all_paths(OnGameCells, Row, Col, L2, Paths),
     write_all(Paths).
 
@@ -420,8 +412,7 @@ find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
     findall(P, dfs_path(X, Y, Depth, Free_Cells, _, P), V1),
     % write_all(V1),
     list_to_set(V1, P1),
-    reverse_all(P1,Paths).
-
+    reverse_all(P1, Paths).
 
 find_all_paths(_,_,_,1,[]).
 find_all_paths(OnGameCells, X, Y, Depth, Paths):-
@@ -451,18 +442,16 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
 %% dfs starting from a root 
 dfs_path(X, Y, Deep, Cells, _, Result):-
     dfs_path([[X, Y]], Deep, Cells, [], Result1),
-    list_to_set(Result1,Result2).
+    list_to_set(Result1, Result).
 %% Done, all visited
 dfs_path(_, 0, _, Result, Result).
 %% Skip elements that are already visited
 dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
     member(Hex, Visited),
-    % write("entre al de quitar los que ya estan "), write(Hex), write("\n"),
     dfs_path(Tail, Deep, Cells, Visited, Result).
 %% add all adjacents
 dfs_path([H|T], Deep, L, Visited, T1):-
     not(member(H, Visited)),
-    % write("recursivo "), write(H), write("\n"),
     nth0( 0, H, X1),
     nth0( 1, H, Y1),
     append(Visited, T, V1),
@@ -470,4 +459,3 @@ dfs_path([H|T], Deep, L, Visited, T1):-
     % append(Nbs, T, ToVisit),
     predecessor(Deep, Deep1),
     dfs_path(Nbs, Deep1, L, [H|Visited], T1).
-    % write("resulatado llamado recursivo "), write(T1), write("\n").
