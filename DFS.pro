@@ -131,7 +131,7 @@ find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
     get_all(Hex, Type, Row, Col, Color, Height, _),
     get_all(H, Type1, Row1, Col1, Color1, Height1, O),
-    (Type1 is Type, Row1 is Row, Type1 is Type,
+    (Type1 = Type, Row1 is Row,
     Col1 is Col, Color1 is Color, Height1 is Height, O is 1, Pos is Index); 
     (successor(Index, Index1), find_hex(Hex, T, Index1, Pos)).
 
@@ -359,7 +359,7 @@ can_move(Hex1, OnGameCells):-
     length(OnGameCells, L),
     get_all(Hex1, T, X, Y, C, _,_), 
     neighbours(Hex1, OnGameCells, Nbs),
-    nth0(Nbs, 0, Nb),
+    nth0(0, Nbs, Nb),
     new_hex(T, X, Y, C, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
@@ -383,14 +383,26 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     write("ant move \n"),
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, Row, Col, C, _, OG1),
+    get_all(Hex1, T, Row, Col, C, _, _),
+    can_move(Hex1, OnGameCells),
     new_hex(T, X, Y, C, 0, 1, Hex2),
     vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
     length(Free_Cells, L),
     halve(L, L2),
     find_all_paths(OnGameCells, Row, Col, L2, Paths),
-    write_all(Paths).
+    write_all(Paths),
+    there_is_a_path(X,Y,Paths),
+    write("exited\n"),
+    find_hex(Hex1,Player,0,Pos),
+    replace_nth0(Player,Pos,_,Hex2,Player_R).
 
+
+there_is_a_path(_,_,[]):- write("exiting\n"),1 = 2.
+there_is_a_path(X,Y,[H|T]):-
+    printall(["looking for ", X, Y, "in ", H]),
+    (last(H,L), nth0(0, L, HX), HX=X, nth0(1, L, HY), HY = Y, ! );
+    there_is_a_path(X,Y,T).
+    
 
 vecino(Hex, Cells, Voids, A):-
     get_all(Hex, _, X1, Y1, _, _, _),
