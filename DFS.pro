@@ -355,7 +355,12 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     ((T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
-can_move(Hex1, OnGameCells):-
+have_adjacent(_, _, []).
+have_adjacent(X, Y, [Hex|Tail]):-
+    get_row(Hex, X1), get_col(Hex, Y1), 
+    (adjacents(X, Y, X1, Y1);have_adjacent(X, Y, Tail)).
+
+can_move(Hex1, X1, Y1, OnGameCells):-
     length(OnGameCells, L),
     get_all(Hex1, T, X, Y, C, _,_), 
     neighbours(Hex1, OnGameCells, Nbs),
@@ -365,7 +370,8 @@ can_move(Hex1, OnGameCells):-
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
     onGameSingle(OG, OGC),
     dfs(Nb, OGC, Result),
-    length(Result, L1), L1 is L-1.
+    length(Result, L1), L1 is L-1,
+    have_adjacent(X1, Y1, OnGameCells).
 
 
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
@@ -374,7 +380,7 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     get_color(Hex1, C), 
     new_hex("queen", X, Y, C, 0, 1, Hex2),
     adjacents(Hex1, Hex2),
-    can_move(Hex1, OnGameCells),
+    can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.
@@ -431,13 +437,15 @@ adjacents(Row1, Col1, Row2, Col2):-
     (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
     (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
 
-neighbours(_, _, [], _, []).
-neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
+is_nb(X, Y, Nb, Visited):-
     nth0( 0, Nb, X1),
     nth0( 1, Nb, Y1),
     not(member([X1,Y1], Visited)),
-    (adjacents(X, Y, X1, Y1), neighbours(X, Y, Tail, Visited, Nbs_), 
-    append([Nb], Nbs_, Nbs)); 
+    adjacents(X, Y, X1, Y1).
+
+neighbours(_, _, [], _, []).
+neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
+    (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
     neighbours(X, Y, Tail, Visited, Nbs).
 %% dfs starting from a root 
 dfs_path(X, Y, Deep, Cells, _, Result):-
@@ -459,3 +467,17 @@ dfs_path([H|T], Deep, L, Visited, T1):-
     % append(Nbs, T, ToVisit),
     predecessor(Deep, Deep1),
     dfs_path(Nbs, Deep1, L, [H|Visited], T1).
+
+true_path(X, Y,  Head):-
+    length(Head, L), predecessor(L, P), nth0(P, Head, H), 
+    nth0( 0, H, X1), nth0( 1, H, Y1),
+    X1 is X, Y1 is Y.
+valid_paths(_, _, [], []).
+valid_paths(X, Y, [Head|Tail], H):-
+    (true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H)); 
+    valid_paths(X, Y, Tail, H).
+
+    %((X1 is X, Y1 is Y, true_path(X, Y, Tail, H1), write("primer caso"), append([Head], H1, H));
+    %(write("segundo caso"), true_path(X, Y, Tail, H1),  H = H1)).
+    
+% is_valid_path(1, 2, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,2]]], H).
