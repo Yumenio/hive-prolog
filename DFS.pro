@@ -352,8 +352,9 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     % onGameCells(Player, Opponent, OnGameCells),
     find_hex([X, Y], Player, Hex),
     get_type(Hex, T), 
-    ((T = "queen", queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
-    (T = "ant",     ant_move(Hex, X1, Y1, Player, Opponent, Player_R))).
+    ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
 have_adjacent(X, Y, [Hex|Tail]):-
@@ -390,18 +391,46 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _),
-    can_move(Hex1, OnGameCells),
+    can_move(Hex1, X, Y, OnGameCells),
     new_hex(T, X, Y, C, 0, 1, Hex2),
-    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+
+    delete(OnGameCells, Hex1, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
     length(Free_Cells, L),
     halve(L, L2),
-    find_all_paths(OnGameCells, Row, Col, L2, Paths),
-    write_all(Paths),
-    there_is_a_path(X,Y,Paths),
-    write("exited\n"),
-    find_hex(Hex1,Player,0,Pos),
-    replace_nth0(Player,Pos,_,Hex2,Player_R).
+    find_all_paths(OnGameCellsAux, Row, Col, L2, Paths),
+    valid_paths(X, Y, Paths, ValidPaths), !,
+    % write_all(Paths),
+    % there_is_a_path(X,Y,Paths),
+    write("Found:\n"),
+    write_all(ValidPaths),
+    length(ValidPaths, LVP),
+    LVP > 0,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
 
+spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, Row, Col, C, _, _),
+    can_move(Hex1, X, Y, OnGameCells),
+    new_hex(T, X, Y, C, 0, 1, Hex2),
+    
+    delete(OnGameCells, Hex1, OnGameCellsAux),
+
+    find_all_paths(OnGameCellsAux, Row, Col, 4, Paths),
+    valid_paths(X, Y, Paths, ValidPaths), !,
+    include(path_of_length_3(), ValidPaths, ValidPathsL3),
+    write("Found:\n"),
+    write_all(ValidPathsL3),
+    length(ValidPathsL3, LVP),
+    LVP > 0,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+    
+
+path_of_length_3(X):- length(X,L), L = 4.   % 4 because length of a path is |Path|-1
 
 there_is_a_path(_,_,[]):- write("exiting\n"),1 = 2.
 there_is_a_path(X,Y,[H|T]):-
@@ -486,7 +515,7 @@ true_path(X, Y,  Head):-
     X1 is X, Y1 is Y.
 valid_paths(_, _, [], []).
 valid_paths(X, Y, [Head|Tail], H):-
-    (true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H)); 
+    ( printall(["Analizing ", X, Y, "in ", Head]), true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H));
     valid_paths(X, Y, Tail, H).
 
     %((X1 is X, Y1 is Y, true_path(X, Y, Tail, H1), write("primer caso"), append([Head], H1, H));
