@@ -472,12 +472,12 @@ true_path(X, Y,  Head):-
     length(Head, L), predecessor(L, P), nth0(P, Head, H), 
     nth0( 0, H, X1), nth0( 1, H, Y1),
     X1 is X, Y1 is Y.
-valid_paths(_, _, [], []).
-valid_paths(X, Y, [Head|Tail], H):-
-    (true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H)); 
-    valid_paths(X, Y, Tail, H).
 
-    %((X1 is X, Y1 is Y, true_path(X, Y, Tail, H1), write("primer caso"), append([Head], H1, H));
-    %(write("segundo caso"), true_path(X, Y, Tail, H1),  H = H1)).
+valid_paths(X, Y, Paths, H):-
+    include(true_path(X, Y), Paths, H).
+%     (true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H)); 
+%     valid_paths(X, Y, Tail, H).
+% v_paths(X, Y, L, H):-
     
-% is_valid_path(1, 2, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,2]]], H).
+% valid_paths(1, 3, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,3]]], H).
+% v_paths(1, 2, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,3]]], H).
