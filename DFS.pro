@@ -444,7 +444,19 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-
+find_grasshoper_paths(Hex, OnGameCells):-
+    % neighbours(Hex, OnGameCells, Nbs),
+    get_row(Hex, Row), get_col(Hex, Col),
+    straight_line(Row, Col,  1,  0, OnGameCells, R10),
+    straight_line(Row, Col,  1,  1, OnGameCells, R11),
+    straight_line(Row, Col,  0,  1, OnGameCells, R01),
+    straight_line(Row, Col, -1,  0, OnGameCells, R_10),
+    straight_line(Row, Col, -1, -1, OnGameCells, R_1_1),
+    straight_line(Row, Col,  0, -1, OnGameCells, R0_1).
+    
+% straight_line(R1, C1, R2, C2, OnGameCells, ):-
+%     ((not(occupied()));
+%     ()).
 
 
 path_of_length_3(X):- length(X,L), L = 4.   % 4 because length of a path is |Path|-1
