@@ -27,3 +27,11 @@ ant 1 0
 ant 2 2
 1 0 3 2
 
+
+init_game().
+queen 1 1
+queen 1 2
+grasshoper 1 0
+ant 2 2
+1 0 1 3
+
