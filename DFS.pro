@@ -444,9 +444,6 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-find_grasshoper_paths(Hex, OnGameCells):-
-    neighbours(Hex, OnGameCells, Nbs),
-    
 
 
 
