@@ -1,2 +1,29 @@
-clllllll([X|_]):- write(X), X1 is X/2+1, write(X1), clllllll([]).
-clllllll([]).
+init_game().
+queen 1 1
+queen 2 1
+ant 1 0
+ant 2 2
+1 0 2 0
+
+
+init_game().
+queen 1 1
+queen 2 1
+1 1 1 2
+
+
+init_game().
+queen 1 1
+queen 2 1
+spider 1 0
+spider 2 2
+1 0 3 1
+
+
+init_game().
+queen 1 1
+queen 2 1
+ant 1 0
+ant 2 2
+1 0 3 3
+
