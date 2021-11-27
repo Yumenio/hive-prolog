@@ -400,9 +400,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     length(Free_Cells, L),
     halve(L, L2),
     find_all_paths(OnGameCellsAux, Row, Col, L2, Paths),
-    valid_paths(X, Y, Paths, ValidPaths), !,
-    % write_all(Paths),
-    % there_is_a_path(X,Y,Paths),
+    valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
     write_all(ValidPaths),
     length(ValidPaths, LVP),
@@ -420,15 +418,18 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
     find_all_paths(OnGameCellsAux, Row, Col, 4, Paths),
-    valid_paths(X, Y, Paths, ValidPaths), !,
+    valid_paths(X, Y, Paths, ValidPaths),
+    write("ALL:\n"),
+    write(ValidPaths),
     include(path_of_length_3(), ValidPaths, ValidPathsL3),
     write("Found:\n"),
     write_all(ValidPathsL3),
     length(ValidPathsL3, LVP),
+    write(LVP), write("\n"),
     LVP > 0,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
-    
+
 
 path_of_length_3(X):- length(X,L), L = 4.   % 4 because length of a path is |Path|-1
 
@@ -437,7 +438,7 @@ there_is_a_path(X,Y,[H|T]):-
     printall(["looking for ", X, Y, "in ", H]),
     (last(H,L), nth0(0, L, HX), HX=X, nth0(1, L, HY), HY = Y, ! );
     there_is_a_path(X,Y,T).
-    
+
 
 vecino(Hex, Cells, Voids, A):-
     get_all(Hex, _, X1, Y1, _, _, _),
@@ -453,7 +454,7 @@ vecinos_void([Hex|Tail], Empties, Cells, V):-
     append(Empties, V1, Empties1),
     vecinos_void(Tail, Empties1, Cells, V2), 
     append(V1, V2, V).
-    
+
 find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
     vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
     findall(P, dfs_path(X, Y, Depth, Free_Cells, _, P), V1),
@@ -513,12 +514,10 @@ true_path(X, Y,  Head):-
     length(Head, L), predecessor(L, P), nth0(P, Head, H), 
     nth0( 0, H, X1), nth0( 1, H, Y1),
     X1 is X, Y1 is Y.
-valid_paths(_, _, [], []).
-valid_paths(X, Y, [Head|Tail], H):-
-    ( printall(["Analizing ", X, Y, "in ", Head]), true_path(X, Y, Head), valid_paths(X, Y, Tail, H1), append([Head], H1, H));
-    valid_paths(X, Y, Tail, H).
 
-    %((X1 is X, Y1 is Y, true_path(X, Y, Tail, H1), write("primer caso"), append([Head], H1, H));
-    %(write("segundo caso"), true_path(X, Y, Tail, H1),  H = H1)).
-    
+valid_paths(X, Y, Paths, ValidPaths):-
+    include(true_path(X,Y), Paths, ValidPaths).
+%((X1 is X, Y1 is Y, true_path(X, Y, Tail, H1), write("primer caso"), append([Head], H1, H));
+%(write("segundo caso"), true_path(X, Y, Tail, H1),  H = H1)).
+
 % is_valid_path(1, 2, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,2]]], H).
