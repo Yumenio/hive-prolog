@@ -399,7 +399,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
     length(Free_Cells, L),
     halve(L, L2),
-    find_all_paths(OnGameCellsAux, Row, Col, L2, Paths),
+    find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
     write_all(ValidPaths),
@@ -417,7 +417,7 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
-    find_all_paths(OnGameCellsAux, Row, Col, 4, Paths),
+    find_all_paths(OnGameCellsAux, Row, Col, 4, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("ALL:\n"),
     write(ValidPaths),
@@ -429,6 +429,25 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     LVP > 0,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, Row, Col, C, _, _),
+    can_move(Hex1, X, Y, OnGameCells),
+    new_hex(T, X, Y, C, 0, 1, Hex2),
+
+    find_grasshoper_paths(Hex1, OnGameCells),
+    valid_paths(X, Y, Paths, ValidPaths),
+    length(ValidPaths, LVP),
+    LVP > 0,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+find_grasshoper_paths(Hex, OnGameCells):-
+    neighbours(Hex, OnGameCells, Nbs),
+    
+
 
 
 path_of_length_3(X):- length(X,L), L = 4.   % 4 because length of a path is |Path|-1
