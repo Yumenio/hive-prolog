@@ -23,6 +23,7 @@ printall([X|T]):-
     write(" "),
     printall(T).
 
+add(X, Y, Z):- Z is X + Y.
 same(X,X).
 successor(X, Y):- Y is X + 1.
 predecessor(X, Y):- Y is X - 1.
@@ -356,6 +357,7 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
@@ -446,108 +448,35 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
+beetle_move(Hex1, X, Y, Player, Opponent, Player_R).
+
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),
-    successor(Row, Row1), predecessor(Row,Row_1),
-    successor(Col, Col1), predecessor(Col, Col_1),
-    straight_line10(Row, Col, OnGameCells, [], R10),
-    straight_line01(Row, Col, OnGameCells, [], R01),
-    straight_line_11(Row, Col, OnGameCells, [], R_11),
-    straight_line_10(Row, Col,  OnGameCells, [], R_10),
-    straight_line0_1(Row, Col, OnGameCells, [], R0_1),
-    straight_line1_1(Row, Col, OnGameCells, [], R1_1),
-    % printall(["1,0 : ", R10]),
-    % printall(["0,1 : ", R01]),
-    % printall(["-1,1 : ", R_11]),
-    % printall(["-1,0 : ", R_10]),
-    % printall(["0,-1 : ", R0_1]),
-    % printall(["1,-1 : ", R1_1]),
+    % successor(Row, Row1), predecessor(Row,Row_1),
+    % successor(Col, Col1), predecessor(Col, Col_1),
+    straight_line(Row, Col, 1, 0, OnGameCells,[], R10),
+    straight_line(Row, Col, 0, 1, OnGameCells,[], R01),
+    straight_line(Row, Col, -1, 1, OnGameCells, [], R_11),
+    straight_line(Row, Col, -1, 0, OnGameCells, [], R_10),
+    straight_line(Row, Col, 0, -1, OnGameCells, [], R0_1),
+    straight_line(Row, Col, 1, -1, OnGameCells, [], R1_1),
     append([[R10],[R01],[R_11],[R_10],[R0_1],[R1_1]], AllPaths),
     include(path_greater_than_2(), AllPaths, Paths).
-    
-% straight_line(Row, Col, _, _, OnGameCells, Acc, R):-
-%     write("Checking for not occupied\n"),
-%     not(occupied(Row, Col, OnGameCells)),
-%     printall(["End of line at", Row, Col, "appending to ", Acc]),
-%     append(Acc, [[Row,Col]],R).
 
-% straight_line(Row, Col, funcRow, funcCol, OnGameCells, Acc, R):-
-%     write("Checking for occupied\n"),
-%     occupied(Row, Col, OnGameCells),
-%     printall(["Jumping over", Row, Col, "appending to", Acc ]),
-%     find_hex([Row, Col], OnGameCells, Hex),
-%     append(Acc, [Hex], Acc1),
-%     funcRow(Row, Row1), funcCol(Col, Col1),
-%     straight_line(Row1, Col1, funcRow, funcCol, OnGameCells, Acc1, R).
-
-
-straight_line10(Row, Col, OnGameCells, Acc, R):-
+straight_line(Row, Col, _, _, OnGameCells, Acc, R):-
+    write("Checking for not occupied\n"),
     not(occupied(Row, Col, OnGameCells)),
+    printall(["End of line at", Row, Col, "appending to ", Acc]),
     append(Acc, [[Row,Col]],R).
 
-straight_line10(Row, Col, OnGameCells, Acc, R):-
+straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
+    write("Checking for occupied\n"),
     occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    successor(Row, Row1),
-    straight_line10(Row1, Col, OnGameCells, Acc1, R).
-
-
-straight_line01(Row, Col, OnGameCells, Acc, R):-
-    not(occupied(Row, Col, OnGameCells)),
-    append(Acc, [[Row,Col]],R).
-
-straight_line01(Row, Col, OnGameCells, Acc, R):-
-    occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    successor(Col, Col1),
-    straight_line01(Row, Col1, OnGameCells, Acc1, R).
-
-
-
-straight_line_11(Row, Col, OnGameCells, Acc, R):-
-    not(occupied(Row, Col, OnGameCells)),
-    append(Acc, [[Row,Col]],R).
-
-straight_line_11(Row, Col, OnGameCells, Acc, R):-
-    occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    predecessor(Row, Row_1), successor(Col, Col1),
-    straight_line_11(Row_1, Col1, OnGameCells, Acc1, R).
-
-
-straight_line_10(Row, Col, OnGameCells, Acc, R):-
-    not(occupied(Row, Col, OnGameCells)),
-    append(Acc, [[Row,Col]],R).
-
-straight_line_10(Row, Col, OnGameCells, Acc, R):-
-    occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    predecessor(Row, Row_1),
-    straight_line_10(Row_1, Col, OnGameCells, Acc1, R).
-
-
-straight_line0_1(Row, Col, OnGameCells, Acc, R):-
-    not(occupied(Row, Col, OnGameCells)),
-    append(Acc, [[Row,Col]],R).
-
-straight_line0_1(Row, Col, OnGameCells, Acc, R):-
-    occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    predecessor(Col, Col_1),
-    straight_line0_1(Row, Col_1, OnGameCells, Acc1, R).
-
-
-
-straight_line1_1(Row, Col, OnGameCells, Acc, R):-
-    not(occupied(Row, Col, OnGameCells)),
-    append(Acc, [[Row,Col]],R).
-
-straight_line1_1(Row, Col, OnGameCells, Acc, R):-
-    occupied(Row, Col, OnGameCells),
-    append(Acc, [[Row, Col]], Acc1),
-    successor(Row, Row1), predecessor(Col, Col_1),
-    straight_line1_1(Row1, Col_1, OnGameCells, Acc1, R).
-
+    printall(["Jumping over", Row, Col, "appending to", Acc ]),
+    find_hex([Row, Col], OnGameCells, Hex),
+    append(Acc, [Hex], Acc1),
+    add(Row, DirRow, Row1), add(Col, DirCol, Col1),
+    straight_line(Row1, Col1, DirRow, DirCol, OnGameCells, Acc1, R).
 
 
 path_of_length_3(X):- length(X, L), L = 4.   % 4 because length of a path is |Path|-1
