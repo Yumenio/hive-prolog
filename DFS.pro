@@ -380,6 +380,7 @@ can_move(Hex1, X1, Y1, OnGameCells):-
 
 
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    1 is 2,
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_color(Hex1, C), 
@@ -448,7 +449,28 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-beetle_move(Hex1, X, Y, Player, Opponent, Player_R).
+beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_color(Hex1, C),
+    new_hex("beetle", X, Y, C, 0, 1, Hex2),
+    adjacents(Hex1, Hex2),
+    can_move(Hex1, X, Y, OnGameCells),
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+    
+beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    occupied(X, Y, OnGameCells),
+    find_hex([X,Y],OnGameCells, OccupiedHex),
+    adjacents(Hex1, OccupiedHex),
+    get_color(Hex1, C), get_height(OccupiedHex, H),
+    successor(H, H1),
+    new_hex("beetle", X, Y, C, H1, 1, Hex2),
+    can_move(Hex1, X, Y, OnGameCells), !,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+    
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),
