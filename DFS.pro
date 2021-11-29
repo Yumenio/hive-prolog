@@ -569,10 +569,6 @@ straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
     add(Row, DirRow, Row1), add(Col, DirCol, Col1),
     straight_line(Row1, Col1, DirRow, DirCol, OnGameCells, Acc1, R).
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 71cde76e26b76202cd3c73136fb5af500c9fa4d9
 path_of_length_3(X):- length(X, L), L = 4.   % 4 because length of a path is |Path|-1
 path_greater_than_2(X) :- length(X, L), L > 2.
 
