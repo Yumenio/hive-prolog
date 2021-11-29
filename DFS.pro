@@ -68,7 +68,7 @@ init_player1(Color,List):-
     new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillBug",   _,_,Color,0,0,PillBug),
+    new_hex("pillbug",   _,_,Color,0,0,PillBug),
     new_hex("ladybug",   _,_,Color,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
@@ -87,7 +87,7 @@ init_player2(Color,List):-
     new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillBug",   _,_,Color,0,0,PillBug),
+    new_hex("pillbug",   _,_,Color,0,0,PillBug),
     new_hex("ladybug",   _,_,Color,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
@@ -245,6 +245,7 @@ second_placed(Hex, Player2, Player2_R):-
     second_placed(Hex, Player2, Player2_R))
     ).
 
+get_coordinates(Hex, Coor):- get_row(Hex, Row), get_col(Hex, Col), Coor = [Row, Col].
 
 % DFS stuffs
 neighbours(_, [], []).
@@ -374,6 +375,7 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ladybug", ladybug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
@@ -408,7 +410,6 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     %Faltaria verificar que puede meterse ahi.
 
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    write("ant move \n"),
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _),
@@ -419,7 +420,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
     length(Free_Cells, L),
-    halve(L, L2),
+    % halve(L, L2),
     find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
@@ -489,7 +490,26 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
 
 ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    onGameCells(Player, Opponent, OnGameCells).
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, Row, Col, C, _, _),
+    can_move(Hex1, X, Y, OnGameCells),
+    new_hex(T, X, Y, C, 0, 1, Hex2),
+
+    delete(OnGameCells, Hex1, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
+    maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
+    append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
+    length(Free_Cells, L),
+    find_all_paths(AllLadybugPathCells, Row, Col, L, Paths), !,
+    valid_paths(X, Y, Paths, ValidPaths),
+    write("Found:\n"),
+    write_all(ValidPaths),
+    length(ValidPaths, LVP),
+    LVP > 0,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),
