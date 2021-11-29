@@ -104,11 +104,18 @@ player2(List):- init_player2(2, List).
 list_print([]):- write("\n").
 list_print([Hex|Tail]):- write(Hex), write(" "), list_print(Tail).
 
-onGameSingle([], []).
-onGameSingle([Hex|Tail], List):- get_onGame(Hex, OnGame), ((OnGame is 1, onGameSingle(Tail, L), append([Hex], L, List)) ; onGameSingle(Tail, L), append([], L, List)).
+% onGameSingle([], []).
+% onGameSingle([Hex|Tail], List):- get_onGame(Hex, OnGame), ((OnGame is 1, onGameSingle(Tail, L), append([Hex], L, List)) ; onGameSingle(Tail, L), append([], L, List)).
 
-onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3), 
-                            onGameSingle(Player2, L4), append(L3, L4, List).
+% onGameCells(Player1, Player2, List):- onGameSingle(Player1, L3), 
+%                             onGameSingle(Player2, L4), append(L3, L4, List).
+
+onGameCells(Player1, Player2, Result):-
+    include(is_on_game(), Player1, OnGamePlayer1),
+    include(is_on_game(), Player2, OnGamePlayer2),
+    append(OnGamePlayer1, OnGamePlayer2, Result).
+
+is_on_game(Hex):- get_onGame(Hex, OG), OG is 1.
 
 % test area
 %llamar_dfs(Adj):- onGameCells(L), nth0(0, L, R), dfs(R, L, V), nth0(0, V, Hex), write(Hex), get_adjacent(Hex, L, Adj).
@@ -125,8 +132,8 @@ find_hex(Pos, [Hex|Tail], Hex1):-
     nth0(0, Pos, X),
     nth0(1, Pos, Y),
     ((get_all(Hex, _, Row1, Col1, _, _, OG1),
-    Row1 is X, Col1 is Y, OG1 is 1, 
-    Hex1 = Hex); 
+    Row1 is X, Col1 is Y, OG1 is 1,
+    Hex1 = Hex);
     find_hex(Pos, Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
@@ -159,7 +166,8 @@ all_same_color(Color, [H|T]):-
     all_same_color(Color, T).
 
 valid_place(Cell, Cells):- 
-    onGameSingle(Cells, OnGameCells),
+    % onGameSingle(Cells, OnGameCells),
+    include(is_on_game, Cells, OnGameCells),
     neighbours(Cell, OnGameCells, Nbs), !,
     length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
@@ -192,7 +200,8 @@ find_free_bug(Type, [H|T], Index, Pos):-
 
 % Cells es celdas en juegos de ambos players
 can_place_hex(Turn, Type, X, Y, Color, Cells):-
-    onGameSingle(Cells,OnGameCells),
+    % onGameSingle(Cells,OnGameCells),
+    include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
     new_hex(Type, X, Y, Color, _, 0, Hex),
@@ -294,13 +303,15 @@ game(Player1,Player2, Turn):-
     % printall(Board11),
     write("Turn Player1:\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
-    onGameSingle(NewPlayer1,Board12),
+    % onGameSingle(NewPlayer1,Board12),
+    include(is_on_game(), NewPlayer1, Board12),
     printall(Board12),
     % onGameSingle(Player2,Board21),
     % printall(Board21),
     write("Turn Player2:\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
-    onGameSingle(NewPlayer2,Board22),
+    % onGameSingle(NewPlayer2,Board22),
+    include(is_on_game(), NewPlayer2, Board22),
     printall(Board22),
     successor(Turn,Turn1),
     game(NewPlayer1,NewPlayer2, Turn1).
@@ -348,11 +359,16 @@ turn_player2(Turn, Player1, Player2, NewPlayer2):-
     ).
 
 
+check_color(Hex, Player):-
+    nth0(0, Player, PlayerHex),
+    get_color(PlayerHex, PHC), get_color(Hex, HC),
+    HC is PHC.
 %---------------------- Moves ----------------------
 
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
-    % onGameCells(Player, Opponent, OnGameCells),
-    find_hex([X, Y], Player, Hex),
+    onGameCells(Player, Opponent, OnGameCells),
+    find_hex([X, Y], OnGameCells, Hex),
+    check_color(Hex, Player),
     get_type(Hex, T), 
     ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
@@ -373,14 +389,14 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     new_hex(T, X, Y, C, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
-    onGameSingle(OG, OGC),
+    % onGameSingle(OG, OGC),
+    include(is_on_game(), OG, OGC),
     dfs(Nb, OGC, Result),
     length(Result, L1), L1 is L-1,
     have_adjacent(X1, Y1, OnGameCells).
 
 
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    1 is 2,
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_color(Hex1, C), 
@@ -471,6 +487,9 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     
+
+ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells).
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),

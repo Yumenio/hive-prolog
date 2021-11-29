@@ -46,3 +46,9 @@ beetle 2 2
 1 1 2 1
 
 
+init_game().
+queen 1 1
+queen 2 1
+beetle 1 0
+2 1 2 0
+
