@@ -125,16 +125,46 @@ is_on_game(Hex):- get_onGame(Hex, OG), OG is 1.
 % compare_things([],[]).
 % compare_things([H1|T1], [H2|T2]):-write(H1), write(H2),compare(H1,H2), compare_things(T1, T2).
 
-% devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve 0.
-find_hex(_, [], _):- 2 is 1.
-find_hex(Pos, [Hex|Tail], Hex1):-
+% devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve falso.
+
+% new_hex(Type,Row,Col,Color,Height,OnGame, hex(Type,Row,Col,Color,Height, OnGame)).
+test_f(A):-
+    new_hex("queen",  1, 1, 1, 0, 1, Hex1),
+    new_hex("queen",  1, 2, 1, 0, 1, Hex2),
+    new_hex("beetle", 1, 1, 1, 1, 1, Hex3),
+    new_hex("beetle", 1, 1, 1, 2, 1, Hex4),
+    new_hex("beetle", 1, 1, 1, 3, 1, Hex5),
+    new_hex("ant",    2, 1, 1, 0, 1, Hex6),
+    Hexs = [Hex1, Hex2, Hex3, Hex4, Hex5, Hex6],
+    find_hex([1, 1], Hexs, A).
+
+find_hex(Pos, L, Hex1):-
+    findall(Hex, find_all_at(Pos, L, Hex), Hexs),
+    length(Hexs, Len), Len > 0,
+    nth0(0, Hexs, H),
+    higher(Hexs, H, Hex1).
+
+higher([], Ch, Ch):- write(Ch).
+higher([Head|Tail], Current_Higher, Higher):-
+    get_height(Current_Higher, H), get_height(Head, H1), 
+    (
+    (H1 >= H, higher(Tail, Head, High1), get_height(High1, Higher1), 
+    ((H1 >= Higher1, Higher = Head); (Higher = High1)));
+
+    (H >= H1, higher(Tail, Current_Higher, High1), get_height(High1, Higher1), 
+    ((H >= Higher1, Higher = Current_Higher); (Higher = High1)))
+    %podria faltar el caso en que H1 == H
+
+    ).
+
+find_all_at(Pos, [Hex|Tail], Hex1):- 
     length(Pos, L), L is 2,
     nth0(0, Pos, X),
     nth0(1, Pos, Y),
     ((get_all(Hex, _, Row1, Col1, _, _, OG1),
-    Row1 is X, Col1 is Y, OG1 is 1,
-    Hex1 = Hex);
-    find_hex(Pos, Tail, Hex1)).
+    Row1 is X, Col1 is Y, OG1 is 1, 
+    Hex1 = Hex); 
+    find_all_at(Pos, Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -539,7 +569,10 @@ straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
     add(Row, DirRow, Row1), add(Col, DirCol, Col1),
     straight_line(Row1, Col1, DirRow, DirCol, OnGameCells, Acc1, R).
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> 71cde76e26b76202cd3c73136fb5af500c9fa4d9
 path_of_length_3(X):- length(X, L), L = 4.   % 4 because length of a path is |Path|-1
 path_greater_than_2(X) :- length(X, L), L > 2.
 
@@ -595,10 +628,22 @@ is_nb(X, Y, Nb, Visited):-
     not(member([X1,Y1], Visited)),
     adjacents(X, Y, X1, Y1).
 
+
 neighbours(_, _, [], _, []).
 neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
     (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
     neighbours(X, Y, Tail, Visited, Nbs).
+
+% is_nb(X, Y, Visited, Nb):-
+%     write_all(["is_nb",Visited, Nb]),
+%     nth0( 0, Nb, X1),
+%     nth0( 1, Nb, Y1),
+%     not(member([X1,Y1], Visited)),
+%     adjacents(X, Y, X1, Y1).
+% neighbours(X, Y, V, L, Nbs):-
+%     write_all([X, Y, L]),
+%     include(is_nb(X, Y, V), L, Nbs),
+%     write_all([Nbs]).
 %% dfs starting from a root 
 dfs_path(X, Y, Deep, Cells, _, Result):-
     dfs_path([[X, Y]], Deep, Cells, [], Result1),
