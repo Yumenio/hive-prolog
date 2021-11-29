@@ -425,6 +425,14 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     length(Result, L1), L1 is L-1,
     have_adjacent(X1, Y1, OnGameCells).
 
+straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
+    write("Checking for occupied\n"),
+    occupied(Row, Col, OnGameCells),
+    printall(["Jumping over", Row, Col, "appending to", Acc ]),
+    find_hex([Row, Col], OnGameCells, Hex),
+    append(Acc, [Hex], Acc1),
+    add(Row, DirRow, Row1), add(Col, DirCol, Col1),
+    straight_line(Row1, Col1, DirRow, DirCol, OnGameCells, Acc1, R).
 
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -603,7 +611,6 @@ is_nb(X, Y, Nb, Visited):-
     nth0( 1, Nb, Y1),
     not(member([X1,Y1], Visited)),
     adjacents(X, Y, X1, Y1).
-
 
 neighbours(_, _, [], _, []).
 neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
