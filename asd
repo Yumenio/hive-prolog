@@ -659,6 +659,14 @@ find_all_paths(OnGameCells, X, Y, Depth, Paths):-
     find_all_paths(OnGameCells, X, Y, D1, P2),
     append(P1,P2,Paths).
 
+find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    maplist(get_coordinates, OnGameCells, OG),
+    append(OG, Free_Cells, Board),
+    findall(P, dfs_path(X, Y, Depth, Board, _, P), V1),
+    % write_all(V1),
+    list_to_set(V1, P1),
+    reverse_all(P1, Paths).
 
 write_all([]):-write("\n").
 write_all([Head|Tail]):-
