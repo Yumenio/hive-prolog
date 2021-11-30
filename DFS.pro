@@ -142,7 +142,7 @@ find_hex(Pos, L, Hex1):-
     findall(Hex, find_all_at(Pos, L, Hex), Hexs),
     length(Hexs, Len), Len > 0,
     nth0(0, Hexs, H),
-    higher(Hexs, H, Hex1).
+    higher(Hexs, H, Hex1), !.
 
 higher([], Ch, Ch):- write(Ch).
 higher([Head|Tail], Current_Higher, Higher):-
@@ -399,8 +399,9 @@ check_color(Hex, Player):-
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     find_hex([X, Y], OnGameCells, Hex),
+    % printall(["find_hex found ", X, Y]),
     check_color(Hex, Player),
-    get_type(Hex, T), 
+    get_type(Hex, T),
     ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
@@ -531,8 +532,8 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
     maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
     append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
-    length(Free_Cells, L),
-    find_all_paths(AllLadybugPathCells, Row, Col, L, Paths), !,
+    write_all(AllLadybugPathCells),
+    find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
     write_all(ValidPaths),
@@ -540,6 +541,24 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     LVP > 0,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_color(Hex1, C), 
+    new_hex("pillbug", X, Y, C, 0, 1, Hex2),
+    adjacents(Hex1, Hex2),
+    can_move(Hex1, X, Y, OnGameCells),
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, Player_R),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(MovingHex, T, Row, Col, Color, Height, OnGame),
+    Height is 0, % the hex being moved cannot be part of a stack of pieces
+    can_move(MovingHex, X, Y).
+
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),
