@@ -258,12 +258,19 @@ second_placed(Hex, Player2, Player2_R):-
 
 get_coordinates(Hex, Coor):- get_row(Hex, Row), get_col(Hex, Col), Coor = [Row, Col].
 
+unblock(BlockedHex, UnblockedHex):-
+    maplist(reduce_block(), BlockedHex, UnblockedHex).
+
+reduce_block(hex(Type, Row, Col, Color, Height, OnGame, X), hex(Type, Row, Col, Color, Height, OnGame, XB)):- X > 0, succ(XB, X).
+reduce_block(hex(Type, Row, Col, Color, Height, OnGame,0), hex(Type, Row, Col, Color, Height, OnGame,0)).
+
 % DFS stuffs
 neighbours(_, [], []).
 neighbours(Hex, [Nb|Tail], Nbs):- 
     (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), 
     append([Nb], Nbs_, Nbs)); 
     neighbours(Hex, Tail, Nbs).
+
 %% dfs starting from a root 
 dfs(Root, OnGameCells, Result):-
     dfs([Root], OnGameCells, [], Result).
@@ -334,14 +341,16 @@ game(Player1,Player2, Turn):-
     printall(Board11), printall(Board21),
     % onGameSingle(Player2,Board21),
     % printall(Board21),
+    unblock(NewPlayer11, UNewPlayer11), unblock(NewPlayer21, UNewPlayer21),
     write("Turn Player2:\n"),
-    turn_player2(Turn, NewPlayer11, NewPlayer21, NewPlayer22, NewPlayer12),
+    turn_player2(Turn, UNewPlayer11, UNewPlayer21, NewPlayer22, NewPlayer12),
     % onGameSingle(NewPlayer2,Board22),
     include(is_on_game(), NewPlayer22, Board22),
     include(is_on_game(), NewPlayer12, Board12),
     printall(Board12), printall(Board22),
-    successor(Turn,Turn1),
-    game(NewPlayer12,NewPlayer22, Turn1).
+    unblock(NewPlayer12, UNewPlayer12), unblock(NewPlayer22, UNewPlayer22),
+    successor(Turn, Turn1),
+    game(UNewPlayer12, UNewPlayer22, Turn1).
 
 
 turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
@@ -369,7 +378,7 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     find_hex([HexOriginRow, HexOriginCol], OnGameCells, MovingHex),
     get_color(MovingHex, MovingHexColor),
     (
-        ( MovingHexColor is 2, NewPlayer1 = Player1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer2));
+        ( MovingHexColor is 2, NewPlayer1 = Player1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
         ( MovingHexColor is 1, NewPlayer2 = Player2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
     )
         
@@ -404,7 +413,7 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     get_color(MovingHex, MovingHexColor),
     (
         ( MovingHexColor is 2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
-        ( MovingHexColor is 1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer1))
+        ( MovingHexColor is 1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
     )
         
     );
@@ -444,10 +453,11 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     length(OnGameCells, L),
     get_all(Hex1, T, X, Y, C, _,_,B),
     B is 0,
-    neighbours(Hex1, OnGameCells, Nbs),
+    neighbours(Hex1, OnGameCells, Nbs), !,
     nth0(0, Nbs, Nb),
     new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
+    
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
     % onGameSingle(OG, OGC),
     include(is_on_game(), OG, OGC),
@@ -556,11 +566,12 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
-    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
-    maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
-    append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
-    write_all(AllLadybugPathCells),
-    find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
+    % vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
+    % maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
+    % append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
+    find_ladybug_paths(OnGameCellsAux, Row, Col, 3, Paths),
+    write_all(Paths),
+    % find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
     write_all(ValidPaths),
@@ -584,10 +595,10 @@ pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
     not(occupied(X, Y, OnGameCells)),
     get_all(MovingHex, T, _, _, Color, Height, _, _),
     Height is 0, % the hex being moved cannot be part of a stack of pieces
-    can_move(MovingHex, X, Y, OnGameCells),
-
+    printall(OnGameCells),
+    can_move(MovingHex, X, Y, OnGameCells), !,
+    
     new_hex(T, X, Y, Color, 0, 1, 2, NewHex),
-
     find_hex(MovingHex, Player, 0, Pos),
     replace_nth0(Player, Pos, _, NewHex, Player_R).
 
@@ -604,6 +615,16 @@ find_grasshoper_paths(Hex, OnGameCells, Paths):-
     straight_line(Row, Col, 1, -1, OnGameCells, [], R1_1),
     append([[R10],[R01],[R_11],[R_10],[R0_1],[R1_1]], AllPaths),
     include(path_greater_than_2(), AllPaths, Paths).
+
+
+find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    maplist(get_coordinates, OnGameCells, OG),
+    append(OG, Free_Cells, Board),
+    findall(P, dfs_path(X, Y, Depth, Board, _, P), V1),
+    % write_all(V1),
+    list_to_set(V1, P1),
+    reverse_all(P1, Paths).
 
 straight_line(Row, Col, _, _, OnGameCells, Acc, R):-
     write("Checking for not occupied\n"),
@@ -681,6 +702,17 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
     (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
     neighbours(X, Y, Tail, Visited, Nbs).
 
+boku_no_neighbours(Visited, [X,Y], [M,N]):-
+    write("Visited:\n"),
+    printall(Visited),
+    printall(["Analizing if", M, N, "is adjacent to", X, Y]),
+    not(member([M, N], Visited)),
+    write("Whoops, already visited\n"),
+    adjacents(X, Y, M, N), write("Adjacent found, appending\n").
+
+ineighbours([X,Y], Candidates, Visited, Nbs):-
+    include(boku_no_neighbours(Visited, [X,Y]), Candidates, Nbs).
+
 % is_nb(X, Y, Visited, Nb):-
 %     write_all(["is_nb",Visited, Nb]),
 %     nth0( 0, Nb, X1),
@@ -707,7 +739,8 @@ dfs_path([H|T], Deep, L, Visited, T1):-
     nth0( 0, H, X1),
     nth0( 1, H, Y1),
     append(Visited, T, V1),
-    neighbours(X1, Y1, L, V1, Nbs),
+    % neighbours(X1, Y1, L, V1, Nbs),
+    ineighbours([X1, Y1], L, V1, Nbs),
     % append(Nbs, T, ToVisit),
     predecessor(Deep, Deep1),
     dfs_path(Nbs, Deep1, L, [H|Visited], T1).
