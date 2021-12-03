@@ -51,7 +51,7 @@ queen 1 1
 queen 2 1
 ladybug 1 0
 ladybug 2 2
-1 0 2 0
+1 0 2 3
 
 
 init_game().

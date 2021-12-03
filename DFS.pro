@@ -576,14 +576,18 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
     capped_dfs([Row, Col], [X, Y], AllLadybugPathCells, 3, Path),
 
-    % find_ladybug_paths(OnGameCellsAux, Row, Col, 3, Paths),
-    % write_all(Paths),
-    % find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
-    % valid_paths(X, Y, Paths, ValidPaths),
+    nth0(1, Path, SecondMove),
+    nth0(2, Path, ThirdMove),
+    nth0(3, Path, FourthMove),
+
+    % printall(["Analyzing validity of the path found\n", SecondMove, "and", ThirdMove, "belong? to ", OnGameCellsAuxCoordinates, "\n", FourthMove, "belongs? to", Free_Cells]),
+
+    member(SecondMove, OnGameCellsAuxCoordinates),
+    member(ThirdMove, OnGameCellsAuxCoordinates),
+    member(FourthMove, Free_Cells),
+
     printall(["Found:", Path]),
-    % write_all(ValidPaths),
-    % length(ValidPaths, LVP),
-    % LVP > 0,
+
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
