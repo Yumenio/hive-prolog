@@ -475,7 +475,7 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
-    %Faltaria verificar que puede meterse ahi.
+    %Faltaria verificar que puede meterse ahi.    
 
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -575,14 +575,15 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
 pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    onGameCells(Player, Opponent, OnGameCells),
-    not(occupied(X, Y, OnGameCells)),
-    get_color(Hex1, C), get_type(Hex1, T),
-    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
-    adjacents(Hex1, Hex2),
-    can_move(Hex1, X, Y, OnGameCells),
-    find_hex(Hex1, Player, 0, Pos),
-    replace_nth0(Player, Pos, _, Hex2, Player_R).
+    queen_move(Hex1, X, Y, Player, Opponent, Player_R).
+    % onGameCells(Player, Opponent, OnGameCells),
+    % not(occupied(X, Y, OnGameCells)),
+    % get_color(Hex1, C), get_type(Hex1, T),
+    % new_hex(T, X, Y, C, 0, 1, 2, Hex2),
+    % adjacents(Hex1, Hex2),
+    % can_move(Hex1, X, Y, OnGameCells),
+    % find_hex(Hex1, Player, 0, Pos),
+    % replace_nth0(Player, Pos, _, Hex2, Player_R).
 
 pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -595,6 +596,33 @@ pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
     new_hex(T, X, Y, Color, 0, 1, 2, NewHex),
     find_hex(MovingHex, Player, 0, Pos),
     replace_nth0(Player, Pos, _, NewHex, Player_R).
+
+mosquito_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    boku_no_adj(Hex1, OnGameCells, Adj), get_type(Adj, T),
+    mosquito_move_aux(Hex1, T, X, Y, Player, Opponent, Player_R).
+    
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "queen",
+    queen_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "beetle",
+    beetle_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "grasshoper",
+    grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "spider",
+    spider_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "ant",
+    ant_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "ladybug",
+    ladybug_move(Hex1, X, Y, Player, Opponent, Player_R).
+mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
+    Type = "pillbug",
+    pillbug_move(Hex1, X, Y, Player, Opponent, Player_R).
 
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
@@ -647,7 +675,7 @@ there_is_a_path(X,Y,[H|T]):-
 valid_path_end(Path, DestHex):-
     last(Path, Last), Last = DestHex.
 
-valid_ladybug_path(Path, OnGameCellsCoordinates, HiveBorderCellCoordinates):-    
+valid_ladybug_path(Path, OnGameCellsCoordinates, HiveBorderCellCoordinates):-
     nth0(1, Path, SecondMove),
     nth0(2, Path, ThirdMove),
     nth0(3, Path, FourthMove),
@@ -667,9 +695,9 @@ vecinos(Hex,  Empties, Cells, Vecinos):-
 
 vecinos_void([],_, _, []).
 vecinos_void([Hex|Tail], Empties, Cells, V):-
-    vecinos(Hex, Empties, Cells, V1), 
+    vecinos(Hex, Empties, Cells, V1),
     append(Empties, V1, Empties1),
-    vecinos_void(Tail, Empties1, Cells, V2), 
+    vecinos_void(Tail, Empties1, Cells, V2),
     append(V1, V2, V).
 
 find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
@@ -783,6 +811,10 @@ boku_no_adj([X, Y], [ [HX, HY]|_], [HX, HY]):-
 % boku_no_adj([X, Y], [H|T], Adj):- printall([X, Y, "not adj to", H, "calling recursively in ", T]), boku_no_adj([X, Y], T, Adj).
 boku_no_adj([X, Y], [_|T], Adj):- boku_no_adj([X, Y], T, Adj).
 
+boku_no_adj(Hex, [Adj|_], Adj):-
+    adjacents(Hex, Adj).
+boku_no_adj(Hex, [_|T], Adj):-
+    boku_no_adj(Hex,T, Adj).
 
 
 capped_dfs([X, Y], Dest, Candidates, Cap, Solution):-
