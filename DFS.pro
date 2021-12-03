@@ -481,16 +481,20 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _, _),
-    can_move(Hex1, X, Y, OnGameCells),
+    can_move(Hex1, X, Y, OnGameCells),!,
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
-
+    
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
-    length(Free_Cells, L),
+
+    % length(Free_Cells, L),
     % halve(L, L2),
-    find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
-    valid_paths(X, Y, Paths, ValidPaths),
+    % find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
+    % valid_paths(X, Y, Paths, ValidPaths),
+
+    single_dfs([Row, Col], [X, Y], Free_Cells, ValidPaths),
+
     write("Found:\n"),
     write_all(ValidPaths),
     length(ValidPaths, LVP),
@@ -566,17 +570,20 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
-    % vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
-    % maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
-    % append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
-    find_ladybug_paths(OnGameCellsAux, Row, Col, 3, Paths),
-    write_all(Paths),
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
+    append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
+    
+    capped_dfs([Row, Col], [X, Y], AllLadybugPathCells, 3, Path),
+
+    % find_ladybug_paths(OnGameCellsAux, Row, Col, 3, Paths),
+    % write_all(Paths),
     % find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
-    valid_paths(X, Y, Paths, ValidPaths),
-    write("Found:\n"),
-    write_all(ValidPaths),
-    length(ValidPaths, LVP),
-    LVP > 0,
+    % valid_paths(X, Y, Paths, ValidPaths),
+    printall(["Found:", Path]),
+    % write_all(ValidPaths),
+    % length(ValidPaths, LVP),
+    % LVP > 0,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
@@ -707,7 +714,7 @@ boku_no_neighbours(Visited, [X,Y], [M,N]):-
     printall(Visited),
     printall(["Analizing if", M, N, "is adjacent to", X, Y]),
     not(member([M, N], Visited)),
-    write("Whoops, already visited\n"),
+    write("Ok, it wasn't visited\n"),
     adjacents(X, Y, M, N), write("Adjacent found, appending\n").
 
 ineighbours([X,Y], Candidates, Visited, Nbs):-
@@ -756,3 +763,40 @@ valid_paths(X, Y, Paths, ValidPaths):-
 %(write("segundo caso"), true_path(X, Y, Tail, H1),  H = H1)).
 
 % is_valid_path(1, 2, [[[1,2],[1,2],[1,2]], [[3,4],[1,2],[1,2]], [[3,4],[1,2],[0,2]]], H).
+
+single_dfs([X, Y], Dest, Candidates, Solution):-
+    % maplist(get_coordinates, Candidates, MappedCandidates),
+    single_path([], [X, Y], Dest, Candidates, Solution).
+
+% single_path(Stack, [X, Y], [X, Y], _, [[X, Y]|Stack]). % caso en el cual llegué al nodo destino
+single_path(Stack, [X, Y], [X, Y], _, [[X, Y]|Stack]):- write("Found: "), write_all([[X, Y]|Stack]).
+
+single_path(Stack, [X, Y], Dest, Candidates, Sol):-
+    % printall(["Current node", X, Y, "looking to reach", Dest, "current path is", Stack]),
+    boku_no_adj([X, Y], Candidates, Adj),
+    not(member(Adj, Stack)),
+    % printall(["Found not visited adjacent",Adj, "calling recursively\n\n"]),
+    single_path([[X, Y]|Stack], Adj, Dest, Candidates, Sol).
+
+boku_no_adj([X, Y], [ [HX, HY]|_], [HX, HY]):-
+    adjacents(X, Y, HX, HY).
+
+% boku_no_adj([X, Y], [H|T], Adj):- printall([X, Y, "not adj to", H, "calling recursively in ", T]), boku_no_adj([X, Y], T, Adj).
+boku_no_adj([X, Y], [_|T], Adj):- boku_no_adj([X, Y], T, Adj).
+
+
+
+capped_dfs([X, Y], Dest, Candidates, Cap, Solution):-
+    single_path([], [X, Y], Dest, Candidates, Cap, RevSolution),
+    reverse(RevSolution, Solution).
+    
+
+single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack]).
+
+single_path(Stack, [X, Y], Dest, Candidates, Cap, Sol):-
+    % printall(["Current node", X, Y, "looking to reach", Dest, "current path is", Stack]),
+    length(Stack, PathLength), PathLength < Cap,
+    boku_no_adj([X, Y], Candidates, Adj),
+    not(member(Adj, Stack)),
+    % printall(["Found not visited adjacent",Adj, "calling recursively\n\n"]),
+    single_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, Sol).
