@@ -469,8 +469,8 @@ can_move(Hex1, X1, Y1, OnGameCells):-
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_color(Hex1, C), 
-    new_hex("queen", X, Y, C, 0, 1, 2, Hex2),
+    get_color(Hex1, C), get_type(Hex1, T),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -488,17 +488,11 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
 
-    % length(Free_Cells, L),
-    % halve(L, L2),
-    % find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
-    % valid_paths(X, Y, Paths, ValidPaths),
+    single_dfs([Row, Col], [X, Y], Free_Cells, Path),
 
-    single_dfs([Row, Col], [X, Y], Free_Cells, ValidPaths),
+    valid_path_end(Path, [X, Y]),
 
-    write("Found:\n"),
-    write_all(ValidPaths),
-    length(ValidPaths, LVP),
-    LVP > 0,
+    write_all(Path),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
@@ -510,17 +504,14 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     
     delete(OnGameCells, Hex1, OnGameCellsAux),
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
 
-    find_all_paths(OnGameCellsAux, Row, Col, 4, Paths), !,
-    valid_paths(X, Y, Paths, ValidPaths),
-    write("ALL:\n"),
-    write(ValidPaths),
-    include(path_of_length_3(), ValidPaths, ValidPathsL3),
-    write("Found:\n"),
-    write_all(ValidPathsL3),
-    length(ValidPathsL3, LVP),
-    write(LVP), write("\n"),
-    LVP > 0,
+    % findall(Path, length_dfs([Row, Col], 3, Free_Cells, Path), AllPaths),
+    % write_all(AllPaths),
+
+    length_dfs([Row, Col], 3, Free_Cells, Path),
+    valid_path_end(Path, [X, Y]),
+
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
@@ -541,8 +532,8 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
 beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_color(Hex1, C),
-    new_hex("beetle", X, Y, C, 0, 1, 2, Hex2),
+    get_color(Hex1, C), get_type(Hex1, T),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -553,9 +544,9 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     occupied(X, Y, OnGameCells),
     find_hex([X,Y],OnGameCells, OccupiedHex),
     adjacents(Hex1, OccupiedHex),
-    get_color(Hex1, C), get_height(OccupiedHex, H),
+    get_color(Hex1, C), get_height(OccupiedHex, H), get_type(Hex1, T),
     successor(H, H1),
-    new_hex("beetle", X, Y, C, H1, 1, 2, Hex2),
+    new_hex(T, X, Y, C, H1, 1, 2, Hex2),
     can_move(Hex1, X, Y, OnGameCells), !,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
@@ -576,17 +567,9 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
     capped_dfs([Row, Col], [X, Y], AllLadybugPathCells, 3, Path),
 
-    nth0(1, Path, SecondMove),
-    nth0(2, Path, ThirdMove),
-    nth0(3, Path, FourthMove),
+    valid_ladybug_path(Path, OnGameCellsAuxCoordinates, Free_Cells),
 
-    % printall(["Analyzing validity of the path found\n", SecondMove, "and", ThirdMove, "belong? to ", OnGameCellsAuxCoordinates, "\n", FourthMove, "belongs? to", Free_Cells]),
-
-    member(SecondMove, OnGameCellsAuxCoordinates),
-    member(ThirdMove, OnGameCellsAuxCoordinates),
-    member(FourthMove, Free_Cells),
-
-    printall(["Found:", Path]),
+    % printall(["Found:", Path]),
 
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
@@ -594,8 +577,8 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
 pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_color(Hex1, C), 
-    new_hex("pillbug", X, Y, C, 0, 1, 2, Hex2),
+    get_color(Hex1, C), get_type(Hex1, T),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -660,6 +643,18 @@ there_is_a_path(X,Y,[H|T]):-
     printall(["looking for ", X, Y, "in ", H]),
     (last(H,L), nth0(0, L, HX), HX=X, nth0(1, L, HY), HY = Y, ! );
     there_is_a_path(X,Y,T).
+
+valid_path_end(Path, DestHex):-
+    last(Path, Last), Last = DestHex.
+
+valid_ladybug_path(Path, OnGameCellsCoordinates, HiveBorderCellCoordinates):-    
+    nth0(1, Path, SecondMove),
+    nth0(2, Path, ThirdMove),
+    nth0(3, Path, FourthMove),
+    % printall(["Analyzing validity of the path found\n", SecondMove, "and", ThirdMove, "belong? to ", OnGameCellsAuxCoordinates, "\n", FourthMove, "belongs? to", Free_Cells]),
+    member(SecondMove, OnGameCellsCoordinates),
+    member(ThirdMove, OnGameCellsCoordinates),
+    member(FourthMove, HiveBorderCellCoordinates).
 
 
 vecino(Hex, Cells, Voids, A):-
@@ -797,10 +792,24 @@ capped_dfs([X, Y], Dest, Candidates, Cap, Solution):-
 
 single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack]).
 
-single_path(Stack, [X, Y], Dest, Candidates, Cap, Sol):-
+single_path(Stack, [X, Y], Dest, Candidates, Cap, Path):-
     % printall(["Current node", X, Y, "looking to reach", Dest, "current path is", Stack]),
     length(Stack, PathLength), PathLength < Cap,
     boku_no_adj([X, Y], Candidates, Adj),
     not(member(Adj, Stack)),
     % printall(["Found not visited adjacent",Adj, "calling recursively\n\n"]),
-    single_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, Sol).
+    single_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, Path).
+
+length_dfs([X, Y], Length, Candidates, Solution):-
+    length_path([], [X, Y], Length, Candidates, RevSolution),
+    reverse(RevSolution, Solution).
+
+length_path(Stack, [X, Y], Length, _, [[X, Y]|Stack]):-
+    length(Stack, StackLength), StackLength is Length.
+
+length_path(Stack, [X, Y], Length, Candidates, Path):-
+    % printall(["Current node", X, Y, "current path is", Stack]),
+    boku_no_adj([X, Y], Candidates, Adj),
+    not(member(Adj, Stack)),
+    % printall(["Found not visited adjacent",Adj, "calling recursively\n\n"]),
+    length_path([[X, Y]|Stack], Adj, Length, Candidates, Path).
