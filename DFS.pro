@@ -183,16 +183,18 @@ valid_place(Cell, Cells):-
     length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
-p(X):- write(X).
 
-queen_on_game([H|T], Color):-
-    get_color(H, C),
-    get_onGame(H, O), 
-    get_type(H, T1), 
-    ((C is Color,
-    T1 = "queen",
-    O is 1);
-    queen_on_game(T, Color)).
+queen_on_game([hex(Type, _, _, Color, _, OnGame, _)|_], PlayerColor):-
+    Type = "queen", Color = PlayerColor, OnGame is 1.
+queen_on_game([_|T], PlayerColor):- queen_on_game(T, PlayerColor).
+
+    % get_color(H, C),
+    % get_onGame(H, O),
+    % get_type(H, T1),
+    % ((C is Color,
+    % T1 = "queen",
+    % O is 1);
+    % queen_on_game(T, Color)).
 
 valid_state(Cells, Turn, Color, Type):-
     queen_on_game(Cells, Color); Turn < 4; (Turn is 4, Type = "queen").
@@ -215,8 +217,8 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-    % new_hex(Type, X, Y, Color, _, 0, 0, Hex),
-    % valid_place(Hex, Cells),
+    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+    valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
@@ -433,7 +435,6 @@ check_color(Hex, Player):-
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     find_hex([X, Y], OnGameCells, Hex),
-    % printall(["find_hex found ", X, Y]),
     check_color(Hex, Player),
     get_type(Hex, T),
     ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
@@ -442,6 +443,7 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ladybug", ladybug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "pillbug", pillbug_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "mosquito", mosquito_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
@@ -453,6 +455,7 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     length(OnGameCells, L),
     get_all(Hex1, T, X, Y, C, _,_,B),
     B is 0,
+    queen_on_game(OnGameCells, C),
     neighbours(Hex1, OnGameCells, Nbs), !,
     nth0(0, Nbs, Nb),
     new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
@@ -500,7 +503,7 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _, _),
-    % can_move(Hex1, X, Y, OnGameCells), !,
+    can_move(Hex1, X, Y, OnGameCells), !,
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     
     delete(OnGameCells, Hex1, OnGameCellsAux),
