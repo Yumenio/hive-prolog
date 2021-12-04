@@ -481,7 +481,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _, _),
-    % can_move(Hex1, X, Y, OnGameCells),!,
+    can_move(Hex1, X, Y, OnGameCells),!,
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
@@ -500,7 +500,7 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _, _),
-    can_move(Hex1, X, Y, OnGameCells),
+    % can_move(Hex1, X, Y, OnGameCells), !,
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     
     delete(OnGameCells, Hex1, OnGameCellsAux),
@@ -787,9 +787,9 @@ true_path(X, Y,  Head):-
 valid_paths(X, Y, Paths, ValidPaths):-
     include(true_path(X,Y), Paths, ValidPaths).
 
-reachable( [From_x, From_y], [To_x, To_y], OnGameCells):-
+reachable( [From_x, From_y], [To_x, To_y], CallNo, OnGameCells, [CommonAdj_x, CommonAdj_y]):-
     % adjacents(From_x, From_y, To_x, To_y),
-
+    printall([CallNo, ": Looking for a common adjacent to", From_x, From_y, "and", To_x, To_y]),
     % Common_x and Common_y goes first bc adjacents() instantiate the first two args out of the others
     adjacents(CommonAdj_x, CommonAdj_y, From_x, From_y),
     adjacents(CommonAdj_x, CommonAdj_y, To_x, To_y),
@@ -801,20 +801,25 @@ single_dfs([X, Y], Dest, Candidates, OnGameCells, Solution):-
     reverse(RevSolution, Solution).
 
 % single_path(Stack, [X, Y], [X, Y], _, [[X, Y]|Stack]). % caso en el cual llegué al nodo destino
-single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack]). % write("Found:\n"), write_all([[X, Y]|Stack]).
+single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack],_):- write("Found:\n"), write_all([[X, Y]|Stack]).
 
-single_path(Stack, [X, Y], Dest, Candidates, OnGameCells, Sol):-
-    % printall([CallNo, ": Current node", X, Y, "looking to reach", Dest, "current path is", Stack]),
-    boku_no_adj([X, Y], Candidates, Adj),
+single_path(Stack, [X, Y], Dest, Candidates, OnGameCells, Sol, CallNo):-
+    printall([CallNo, ": Current node", X, Y, "looking to reach", Dest, "current path is", Stack]),
+    printall([CallNo, ": Looking for an adjacent"]),
+    boku_no_adj([X, Y], Candidates, Stack, Adj),
+    printall([CallNo, ": Found adjacent", Adj]),
     not(member(Adj, Stack)),
-    % printall([CallNo, ": Calling reachable([", X, Y, "],", Adj]),
-    reachable([X, Y], Adj, OnGameCells),!,
-    % printall([CallNo, ": Found not visited adjacent", Adj, "calling recursively because", Output, "is free\n\n"]),
-    single_path([[X, Y]|Stack], Adj, Dest, Candidates, OnGameCells, Sol).
+    printall([CallNo, ":", Adj, "is not visited"]),
+    printall([CallNo, ": Calling reachable([", X, Y, "],", Adj]),
+    reachable([X, Y], Adj, CallNo, OnGameCells, Output),
+    printall([CallNo, ": Found not visited adjacent", Adj, "calling recursively because", Output, "is free\n\n"]),
+    succ(CallNo, CallNoSuc),
+    single_path([[X, Y]|Stack], Adj, Dest, Candidates, OnGameCells, Sol, CallNoSuc).
 
-boku_no_adj([X, Y], [ [HX, HY]|_], [HX, HY]):-
+boku_no_adj([X, Y], [ [HX, HY]|_], Stack, [HX, HY]):-
+    not(member([HX, HY], Stack)),
     adjacents(X, Y, HX, HY).
-boku_no_adj([X, Y], [_|T], Adj):- boku_no_adj([X, Y], T, Adj).
+boku_no_adj([X, Y], [_|T], Stack, Adj):- boku_no_adj([X, Y], T, Stack, Adj).
 
 % Hex definition
 boku_no_adj(Hex, [Adj|_], Adj):-
@@ -840,16 +845,18 @@ capped_path(Stack, [X, Y], Dest, Candidates, Cap, OnGameCells, Path):-
 
 
 length_dfs([X, Y], Length, Candidates, OnGameCells, Solution):-
-    length_path([], [X, Y], Length, Candidates, OnGameCells, RevSolution),
+    length_path([], [X, Y], Length, Candidates, OnGameCells, RevSolution, 1),
     reverse(RevSolution, Solution).
 
-length_path(Stack, [X, Y], Length, _, _, [[X, Y]|Stack]):- length(Stack, StackLength), StackLength is Length.
+length_path(Stack, [X, Y], Length, _, _, [[X, Y]|Stack], CallNo):- printall([CallNo, ": Found",[[X,Y]|Stack] ]),length(Stack, StackLength), StackLength is Length.
 
-length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
+length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path, CallNo):-
     length(Stack, StackLength), StackLength < Length,
-    % printall(["Current node", X, Y, "current path is", Stack]),
+    printall([CallNo, ": Current node", X, Y, "current path is", Stack, "of Length =", StackLength]),
     boku_no_adj([X, Y], Candidates, Adj),
-    reachable([X, Y], Adj, OnGameCells), !,
     not(member(Adj, Stack)),
-    % printall(["Found not visited adjacent",Adj, "calling recursively\n\n"]),
-    length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path).
+    printall([CallNo, ": Calling reachable([", X, Y, "],", Adj]),
+    reachable([X, Y], Adj, CallNo, OnGameCells, Output), !,
+    printall([CallNo, ": Found not visited adjacent", Adj, "calling recursively because", Output, "is free\n\n"]),
+    succ(CallNo, CallNoSuc),
+    length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path, CallNoSuc).
