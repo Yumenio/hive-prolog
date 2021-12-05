@@ -7,14 +7,16 @@ get_col(Hex,Col):-         arg(3,Hex,Col).
 get_color(Hex,Color):-     arg(4,Hex,Color).
 get_height(Hex,Height):-   arg(5,Hex,Height).
 get_onGame(Hex,OnGame):-   arg(6,Hex,OnGame).
+get_blocked(Hex,OnGame):-  arg(7,Hex,OnGame).
 
-get_all(Hex, T, X, Y, C, H, O):- 
+get_all(Hex, T, X, Y, C, H, O, B):- 
     get_type(Hex,T),
     get_row(Hex,X),
     get_col(Hex,Y),
     get_color(Hex,C),
     get_height(Hex,H),
-    get_onGame(Hex,O).
+    get_onGame(Hex,O),
+    get_blocked(Hex,B).
 
 
 printall([]):-
@@ -54,42 +56,42 @@ adjacents(Hex1,Hex2):-
 
 
 
-new_hex(Type,Row,Col,Color,Height,OnGame, hex(Type,Row,Col,Color,Height, OnGame)).
+new_hex(Type, Row, Col, Color, Height, OnGame, Blocked, hex(Type, Row, Col, Color, Height, OnGame, Blocked)).
 
 init_player1(Color,List):-
-    new_hex("queen",     _,_,Color,0,0,Queen),
-    new_hex("ant",       _,_,Color,0,0,Ant1),
-    new_hex("ant",       _,_,Color,0,0,Ant2),
-    new_hex("ant",       _,_,Color,0,0,Ant3),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper1),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper2),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper3),
-    new_hex("beetle",    _,_,Color,0,0,Beetle1),
-    new_hex("beetle",    _,_,Color,0,0,Beetle2),
-    new_hex("spider",    _,_,Color,0,0,Spider1),
-    new_hex("spider",    _,_,Color,0,0,Spider2),
-    new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillbug",   _,_,Color,0,0,PillBug),
-    new_hex("ladybug",   _,_,Color,0,0,Ladybug),
+    new_hex("queen",     _,_,Color,0,0,0,Queen),
+    new_hex("ant",       _,_,Color,0,0,0,Ant1),
+    new_hex("ant",       _,_,Color,0,0,0,Ant2),
+    new_hex("ant",       _,_,Color,0,0,0,Ant3),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper1),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper2),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper3),
+    new_hex("beetle",    _,_,Color,0,0,0,Beetle1),
+    new_hex("beetle",    _,_,Color,0,0,0,Beetle2),
+    new_hex("spider",    _,_,Color,0,0,0,Spider1),
+    new_hex("spider",    _,_,Color,0,0,0,Spider2),
+    new_hex("mosquito",  _,_,Color,0,0,0,Mosquito),
+    new_hex("pillbug",   _,_,Color,0,0,0,PillBug),
+    new_hex("ladybug",   _,_,Color,0,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
                 Grasshoper3, Beetle1, Beetle2, 
                 Spider1, Spider2, Mosquito, PillBug, Ladybug], List).
 init_player2(Color,List):-
-    new_hex("queen",     _,_,Color,0,0,Queen),
-    new_hex("ant",       _,_,Color,0,0,Ant1),
-    new_hex("ant",       _,_,Color,0,0,Ant2),
-    new_hex("ant",       _,_,Color,0,0,Ant3),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper1),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper2),
-    new_hex("grasshoper",_,_,Color,0,0,Grasshoper3),
-    new_hex("beetle",    _,_,Color,0,0,Beetle1),
-    new_hex("beetle",    _,_,Color,0,0,Beetle2),
-    new_hex("spider",    _,_,Color,0,0,Spider1),
-    new_hex("spider",    _,_,Color,0,0,Spider2),
-    new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillbug",   _,_,Color,0,0,PillBug),
-    new_hex("ladybug",   _,_,Color,0,0,Ladybug),
+    new_hex("queen",     _,_,Color,0,0,0,Queen),
+    new_hex("ant",       _,_,Color,0,0,0,Ant1),
+    new_hex("ant",       _,_,Color,0,0,0,Ant2),
+    new_hex("ant",       _,_,Color,0,0,0,Ant3),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper1),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper2),
+    new_hex("grasshoper",_,_,Color,0,0,0,Grasshoper3),
+    new_hex("beetle",    _,_,Color,0,0,0,Beetle1),
+    new_hex("beetle",    _,_,Color,0,0,0,Beetle2),
+    new_hex("spider",    _,_,Color,0,0,0,Spider1),
+    new_hex("spider",    _,_,Color,0,0,0,Spider2),
+    new_hex("mosquito",  _,_,Color,0,0,0,Mosquito),
+    new_hex("pillbug",   _,_,Color,0,0,0,PillBug),
+    new_hex("ladybug",   _,_,Color,0,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
                 Grasshoper3, Beetle1, Beetle2, 
@@ -115,8 +117,6 @@ onGameCells(Player1, Player2, Result):-
 
 is_on_game(Hex):- get_onGame(Hex, OG), OG is 1.
 
-% devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve falso.
-
 find_hex(Pos, L, Hex1):-
     findall(Hex, find_all_at(Pos, L, Hex), Hexs),
     length(Hexs, Len), Len > 0,
@@ -140,15 +140,15 @@ find_all_at(Pos, [Hex|Tail], Hex1):-
     length(Pos, L), L is 2,
     nth0(0, Pos, X),
     nth0(1, Pos, Y),
-    ((get_all(Hex, _, Row1, Col1, _, _, OG1),
+    ((get_all(Hex, _, Row1, Col1, _, _, OG1,_),
     Row1 is X, Col1 is Y, OG1 is 1, 
     Hex1 = Hex); 
     find_all_at(Pos, Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
-    get_all(Hex, Type, Row, Col, Color, Height, _),
-    get_all(H, Type1, Row1, Col1, Color1, Height1, O),
+    get_all(Hex, Type, Row, Col, Color, Height, _, _),
+    get_all(H, Type1, Row1, Col1, Color1, Height1, O, _),
     (Type1 = Type, Row1 is Row,
     Col1 is Col, Color1 is Color, Height1 is Height, O is 1, Pos is Index); 
     (successor(Index, Index1), find_hex(Hex, T, Index1, Pos)).
@@ -235,14 +235,14 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-    new_hex(Type, X, Y, Color, _, 0, Hex),
+    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
     valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
     append(Player1, Player2, Cells),
     can_place_hex(Turn, Type, X, Y, Color, Cells),
-    new_hex(Type, X, Y, Color, 0, 1, Hex),
+    new_hex(Type, X, Y, Color, 0, 1, 0, Hex),
     (Color is 1,
     find_free_bug(Type, Player1, 0, Pos),
     replace_nth0(Player1, Pos, _, Hex, Player_R)
@@ -257,7 +257,7 @@ first_placed(Player1,Player1_R,Hex):-
     split_string(Raw_input,"\s","\s",Input),
     (length(Input,L), L is 3,
     parse_input_place(Raw_input,Type,Row,Col),
-    new_hex(Type,Row,Col,1,0,1,Hex),
+    new_hex(Type,Row,Col,1,0,1,0,Hex),
     find_free_bug(Type,Player1,0,Pos),
     replace_nth0(Player1,Pos,_,Hex,Player1_R)
     );
@@ -269,7 +269,7 @@ second_placed(Hex, Player2, Player2_R):-
     split_string(Raw_input,"\s","\s",Input),
     length(Input, L),
     ((L is 3, parse_input_place(Raw_input, Type, Row, Col),
-    new_hex(Type, Row, Col, 2, 0, 1, Hex_), adjacents(Hex, Hex_),
+    new_hex(Type, Row, Col, 2, 0, 1, 0, Hex_), adjacents(Hex, Hex_),
     find_free_bug(Type, Player2, 0, Pos),
     replace_nth0(Player2, Pos, _, Hex_, Player2_R) );
     (write("You did something wrong, try again\n"),
@@ -319,6 +319,22 @@ parse_input_move(Raw_input,R1,C1,R2,C2):-
     atom_number(R_2,R2),
     atom_number(C_2,C2).
 
+parse_input_special(Raw_input, R1, C1, R2, C2, R3, C3):-
+    split_string(Raw_input,"\s","\s",Input),
+    nth0(0,Input,R_1),
+    nth0(1,Input,C_1),
+    nth0(2,Input,R_2),
+    nth0(3,Input,C_2),
+    nth0(4,Input,R_3),
+    nth0(5,Input,C_3),
+    atom_number(R_1,R1),
+    atom_number(C_1,C1),
+    atom_number(R_2,R2),
+    atom_number(C_2,C2),
+    atom_number(R_3,R3),
+    atom_number(C_3,C3).
+
+
 first_two_places(Player1,Player2,Player1_R,Player2_R):-
     write("First turn:\n"),
     first_placed(Player1,Player1_R,Hex),
@@ -332,15 +348,20 @@ init_game():-
 
 game(Player1,Player2, Turn):-
     write("Turn Player1:\n"),
-    turn_player1(Turn, Player1, Player2, NewPlayer1),
-    show_board(NewPlayer1, Player2),
-
+    turn_player1(Turn, Player1, Player2, NewPlayer11, NewPlayer21),
+    include(is_on_game(), NewPlayer11, Board11),
+    include(is_on_game(), NewPlayer21, Board21),
+    printall(Board11), printall(Board21),
+    % onGameSingle(Player2,Board21),
+    % printall(Board21),
     write("Turn Player2:\n"),
-    turn_player2(Turn, Player1, Player2, NewPlayer2),
-    show_board(NewPlayer1, NewPlayer2),
-    
+    turn_player2(Turn, NewPlayer11, NewPlayer21, NewPlayer22, NewPlayer12),
+    % onGameSingle(NewPlayer2,Board22),
+    include(is_on_game(), NewPlayer22, Board22),
+    include(is_on_game(), NewPlayer12, Board12),
+    printall(Board12), printall(Board22),
     successor(Turn,Turn1),
-    game(NewPlayer1,NewPlayer2, Turn1).
+    game(NewPlayer12,NewPlayer22, Turn1).
 
 show_board(Player_1, Player_2):-
     include(is_on_game(), Player_1, Player1),
@@ -350,45 +371,74 @@ show_board(Player_1, Player_2):-
     board(Converted, Board),
     write(Board).
 
-turn_player1(Turn, Player1, Player2, NewPlayer1):-
+turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
     (
     % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
-    % printall([Type,Row,Col]),
-    place_hex(Turn, Type,Row,Col,1,Player1,Player2,NewPlayer1) );
+    place_hex(Turn, Type,Row,Col,1,Player1,Player2,NewPlayer1), NewPlayer2 = Player2 );
     
     % caso mover ficha
     (length(Input,L2), L2 is 4,
     parse_input_move(Raw_input,R1,C1,R2,C2),
-    move_hex(R1, C1, R2, C2, Player1, Player2, NewPlayer1)
+    move_hex(R1, C1, R2, C2, Player1, Player2, NewPlayer1), NewPlayer2 = Player2
     );
     
+    % caso pillbug special
+    (length(Input, L3), L3 is 6,
+    parse_input_special(Raw_input, PillRow, PillCol, HexOriginRow, HexOriginCol, HexDestRow, HexDestCol),
+    onGameCells(Player1, Player2, OnGameCells),
+    find_hex([PillRow, PillCol], OnGameCells, PillbugHex),
+    get_type(PillbugHex, PillbugType), PillbugType = "pillbug",
+    check_color(PillbugHex, Player1),
+    find_hex([HexOriginRow, HexOriginCol], OnGameCells, MovingHex),
+    get_color(MovingHex, MovingHexColor),
+    (
+        ( MovingHexColor is 2, NewPlayer1 = Player1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer2));
+        ( MovingHexColor is 1, NewPlayer2 = Player2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
+    )
+        
+    );
     % caso no válido
     (write("\nInvalid input, please try again\n"),
-    turn_player1(Turn, Player1, Player2, NewPlayer1))
+    turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2))
     ).
 
-turn_player2(Turn, Player1, Player2, NewPlayer2):-
+turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
     ( % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
-    % printall([Type,Row,Col]),
-    place_hex(Turn, Type,Row,Col,2,Player1,Player2,NewPlayer2) );
+    place_hex(Turn, Type,Row,Col,2,Player1,Player2,NewPlayer2), NewPlayer1 = Player1 );
     
     % caso mover ficha
     (length(Input,L2), L2 is 4,
     parse_input_move(Raw_input,R1,C1,R2,C2),
-    move_hex(R1, C1, R2, C2, Player2, Player1, NewPlayer2)
+    move_hex(R1, C1, R2, C2, Player2, Player1, NewPlayer2), NewPlayer1 = Player1
+    );
+
+    % caso pillbug special
+    (length(Input, L3), L3 is 6,
+    parse_input_special(Raw_input, PillRow, PillCol, HexOriginRow, HexOriginCol, HexDestRow, HexDestCol),
+    onGameCells(Player2, Player1, OnGameCells),
+    find_hex([PillRow, PillCol], OnGameCells, PillbugHex),
+    get_type(PillbugHex, PillbugType), PillbugType = "pillbug",
+    check_color(PillbugHex, Player2),
+    find_hex([HexOriginRow, HexOriginCol], OnGameCells, MovingHex),
+    get_color(MovingHex, MovingHexColor),
+    (
+        ( MovingHexColor is 2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
+        ( MovingHexColor is 1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer1))
+    )
+        
     );
 
     % caso no válido
     (write("\nInvalid input, please try again\n"),
-    turn_player2(Turn, Player1, Player2, NewPlayer2))
+    turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1))
     ).
 
 
@@ -409,6 +459,7 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ladybug", ladybug_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "pillbug", pillbug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
@@ -418,10 +469,11 @@ have_adjacent(X, Y, [Hex|Tail]):-
 
 can_move(Hex1, X1, Y1, OnGameCells):-
     length(OnGameCells, L),
-    get_all(Hex1, T, X, Y, C, _,_), 
+    get_all(Hex1, T, X, Y, C, _,_,B),
+    B is 0,
     neighbours(Hex1, OnGameCells, Nbs),
     nth0(0, Nbs, Nb),
-    new_hex(T, X, Y, C, 0, 0, New_Hex),
+    new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
     % onGameSingle(OG, OGC),
@@ -435,7 +487,7 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_color(Hex1, C), 
-    new_hex("queen", X, Y, C, 0, 1, Hex2),
+    new_hex("queen", X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -445,9 +497,9 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, Row, Col, C, _, _),
+    get_all(Hex1, T, Row, Col, C, _, _, _),
     can_move(Hex1, X, Y, OnGameCells),
-    new_hex(T, X, Y, C, 0, 1, Hex2),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
@@ -466,9 +518,9 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
 spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, Row, Col, C, _, _),
+    get_all(Hex1, T, Row, Col, C, _, _, _),
     can_move(Hex1, X, Y, OnGameCells),
-    new_hex(T, X, Y, C, 0, 1, Hex2),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
@@ -488,9 +540,9 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
 grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, _, _, C, _, _),
+    get_all(Hex1, T, _, _, C, _, _, _),
     can_move(Hex1, X, Y, OnGameCells), !,
-    new_hex(T, X, Y, C, 0, 1, Hex2),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     find_grasshoper_paths(Hex1, OnGameCells, Paths),
     valid_paths(X, Y, Paths, ValidPaths),
@@ -503,7 +555,7 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_color(Hex1, C),
-    new_hex("beetle", X, Y, C, 0, 1, Hex2),
+    new_hex("beetle", X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -516,7 +568,7 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     adjacents(Hex1, OccupiedHex),
     get_color(Hex1, C), get_height(OccupiedHex, H),
     successor(H, H1),
-    new_hex("beetle", X, Y, C, H1, 1, Hex2),
+    new_hex("beetle", X, Y, C, H1, 1, 2, Hex2),
     can_move(Hex1, X, Y, OnGameCells), !,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
@@ -525,9 +577,9 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
 ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(Hex1, T, Row, Col, C, _, _),
+    get_all(Hex1, T, Row, Col, C, _, _, _),
     can_move(Hex1, X, Y, OnGameCells),
-    new_hex(T, X, Y, C, 0, 1, Hex2),
+    new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
@@ -548,7 +600,7 @@ pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_color(Hex1, C), 
-    new_hex("pillbug", X, Y, C, 0, 1, Hex2),
+    new_hex("pillbug", X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
@@ -601,7 +653,7 @@ there_is_a_path(X,Y,[H|T]):-
 
 
 vecino(Hex, Cells, Voids, A):-
-    get_all(Hex, _, X1, Y1, _, _, _),
+    get_all(Hex, _, X1, Y1, _, _, _, _),
     adjacents(X, Y, X1, Y1), not(occupied(X, Y, Cells)), append([X], [Y], A),
     not(member(A, Voids)).
 
