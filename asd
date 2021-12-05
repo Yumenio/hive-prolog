@@ -1,4 +1,5 @@
-% import(list_utils).
+:-use_module(board).
+
 
 get_type(Hex,Type):-       arg(1,Hex,Type).
 get_row(Hex,Row):-         arg(2,Hex,Row).
@@ -68,7 +69,7 @@ init_player1(Color,List):-
     new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillBug",   _,_,Color,0,0,PillBug),
+    new_hex("pillbug",   _,_,Color,0,0,PillBug),
     new_hex("ladybug",   _,_,Color,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
@@ -87,7 +88,7 @@ init_player2(Color,List):-
     new_hex("spider",    _,_,Color,0,0,Spider1),
     new_hex("spider",    _,_,Color,0,0,Spider2),
     new_hex("mosquito",  _,_,Color,0,0,Mosquito),
-    new_hex("pillBug",   _,_,Color,0,0,PillBug),
+    new_hex("pillbug",   _,_,Color,0,0,PillBug),
     new_hex("ladybug",   _,_,Color,0,0,Ladybug),
     append([], [Queen, Ant1, Ant2, Ant3, 
                 Grasshoper1, Grasshoper2, 
@@ -100,9 +101,6 @@ players(Player1,Player2):-
 
 player1(List):- init_player1(1, List).
 player2(List):- init_player2(2, List).
-
-list_print([]):- write("\n").
-list_print([Hex|Tail]):- write(Hex), write(" "), list_print(Tail).
 
 % onGameSingle([], []).
 % onGameSingle([Hex|Tail], List):- get_onGame(Hex, OnGame), ((OnGame is 1, onGameSingle(Tail, L), append([Hex], L, List)) ; onGameSingle(Tail, L), append([], L, List)).
@@ -117,34 +115,15 @@ onGameCells(Player1, Player2, Result):-
 
 is_on_game(Hex):- get_onGame(Hex, OG), OG is 1.
 
-% test area
-%llamar_dfs(Adj):- onGameCells(L), nth0(0, L, R), dfs(R, L, V), nth0(0, V, Hex), write(Hex), get_adjacent(Hex, L, Adj).
-% llamar_dfs(Hex):- onGameCells(L), find_hex(1,1, L, Hex).
-% :- debug.
-% compare(X, Y):- X = Y; X is Y.
-% compare_things([],[]).
-% compare_things([H1|T1], [H2|T2]):-write(H1), write(H2),compare(H1,H2), compare_things(T1, T2).
-
 % devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve falso.
-
-% new_hex(Type,Row,Col,Color,Height,OnGame, hex(Type,Row,Col,Color,Height, OnGame)).
-test_f(A):-
-    new_hex("queen",  1, 1, 1, 0, 1, Hex1),
-    new_hex("queen",  1, 2, 1, 0, 1, Hex2),
-    new_hex("beetle", 1, 1, 1, 1, 1, Hex3),
-    new_hex("beetle", 1, 1, 1, 2, 1, Hex4),
-    new_hex("beetle", 1, 1, 1, 3, 1, Hex5),
-    new_hex("ant",    2, 1, 1, 0, 1, Hex6),
-    Hexs = [Hex1, Hex2, Hex3, Hex4, Hex5, Hex6],
-    find_hex([1, 1], Hexs, A).
 
 find_hex(Pos, L, Hex1):-
     findall(Hex, find_all_at(Pos, L, Hex), Hexs),
     length(Hexs, Len), Len > 0,
     nth0(0, Hexs, H),
-    higher(Hexs, H, Hex1).
+    higher(Hexs, H, Hex1), !.
 
-higher([], Ch, Ch):- write(Ch).
+higher([], Ch, Ch).
 higher([Head|Tail], Current_Higher, Higher):-
     get_height(Current_Higher, H), get_height(Head, H1), 
     (
@@ -202,7 +181,35 @@ valid_place(Cell, Cells):-
     length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
-p(X):- write(X).
+get_first_letter(T, L):-
+    T = "queen",      L = "Q".
+get_first_letter(T, L):-
+    T = "ant",        L = "A".
+get_first_letter(T, L):-
+    T = "grasshoper", L = "G".
+get_first_letter(T, L):-
+    T = "beetle",     L = "B".
+get_first_letter(T, L):-
+    T = "spider",     L = "S".
+get_first_letter(T, L):-
+    T = "mosquito",   L = "M".
+get_first_letter(T, L):-
+    T = "pillbug",    L = "P".
+get_first_letter(T, L):-
+    T = "ladybug",    L = "L".
+get_color_letter(C, L):-
+    C is 1, L = "W".
+get_color_letter(C, L):-
+    C is 2, L = "B".
+
+convert_cells(Hex, Converted_Hex):-
+    get_type(Hex, T), get_first_letter(T, Letter), 
+    get_color(Hex, C), get_color_letter(C, Color),
+    concat(Color, Letter, Name), get_row(Hex, X), get_col(Hex, Y), 
+    Converted_Hex = [X, Y, Name].
+
+get_converted_cells(Cells, Converted_Cells):-
+    maplist(convert_cells, Cells, Converted_Cells).
 
 queen_on_game([H|T], Color):-
     get_color(H, C),
@@ -215,12 +222,6 @@ queen_on_game([H|T], Color):-
 
 valid_state(Cells, Turn, Color, Type):-
     queen_on_game(Cells, Color); Turn < 4; (Turn is 4, Type = "queen").
-
-% find_free_bug(_, [], -1).
-% find_free_bug(Type, [H|T], Pos):-
-%     (get_type(H, T), T is Type, length(T, L), Pos is L+1); 
-%     (find_free_bug(Type, T, Pos)).
-
 
 find_free_bug(_, [], _, -1).
 find_free_bug(Type, [H|T], Index, Pos):-
@@ -275,6 +276,7 @@ second_placed(Hex, Player2, Player2_R):-
     second_placed(Hex, Player2, Player2_R))
     ).
 
+get_coordinates(Hex, Coor):- get_row(Hex, Row), get_col(Hex, Col), Coor = [Row, Col].
 
 % DFS stuffs
 neighbours(_, [], []).
@@ -329,23 +331,24 @@ init_game():-
     game(Player1_R,Player2_R, 2).
 
 game(Player1,Player2, Turn):-
-    % onGameSingle(Player1,Board11),
-    % printall(Board11),
     write("Turn Player1:\n"),
     turn_player1(Turn, Player1, Player2, NewPlayer1),
-    % onGameSingle(NewPlayer1,Board12),
-    include(is_on_game(), NewPlayer1, Board12),
-    printall(Board12),
-    % onGameSingle(Player2,Board21),
-    % printall(Board21),
+    show_board(NewPlayer1, Player2),
+
     write("Turn Player2:\n"),
     turn_player2(Turn, Player1, Player2, NewPlayer2),
-    % onGameSingle(NewPlayer2,Board22),
-    include(is_on_game(), NewPlayer2, Board22),
-    printall(Board22),
+    show_board(NewPlayer1, NewPlayer2),
+    
     successor(Turn,Turn1),
     game(NewPlayer1,NewPlayer2, Turn1).
 
+show_board(Player_1, Player_2):-
+    include(is_on_game(), Player_1, Player1),
+    include(is_on_game(), Player_2, Player2),
+    append(Player1, Player2, OnGameCells),
+    get_converted_cells(OnGameCells, Converted),
+    board(Converted, Board),
+    write(Board).
 
 turn_player1(Turn, Player1, Player2, NewPlayer1):-
     read_line_to_string(user_input, Raw_input),
@@ -398,12 +401,14 @@ check_color(Hex, Player):-
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     find_hex([X, Y], OnGameCells, Hex),
+    % printall(["find_hex found ", X, Y]),
     check_color(Hex, Player),
-    get_type(Hex, T), 
+    get_type(Hex, T),
     ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ladybug", ladybug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
 have_adjacent(_, _, []).
@@ -425,14 +430,6 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     length(Result, L1), L1 is L-1,
     have_adjacent(X1, Y1, OnGameCells).
 
-straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
-    write("Checking for occupied\n"),
-    occupied(Row, Col, OnGameCells),
-    printall(["Jumping over", Row, Col, "appending to", Acc ]),
-    find_hex([Row, Col], OnGameCells, Hex),
-    append(Acc, [Hex], Acc1),
-    add(Row, DirRow, Row1), add(Col, DirCol, Col1),
-    straight_line(Row1, Col1, DirRow, DirCol, OnGameCells, Acc1, R).
 
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -446,7 +443,6 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     %Faltaria verificar que puede meterse ahi.
 
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    write("ant move \n"),
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     get_all(Hex1, T, Row, Col, C, _, _),
@@ -457,7 +453,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
     length(Free_Cells, L),
-    halve(L, L2),
+    % halve(L, L2),
     find_all_paths(OnGameCellsAux, Row, Col, L, Paths), !,
     valid_paths(X, Y, Paths, ValidPaths),
     write("Found:\n"),
@@ -527,7 +523,44 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     
 
 ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
-    onGameCells(Player, Opponent, OnGameCells).
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(Hex1, T, Row, Col, C, _, _),
+    can_move(Hex1, X, Y, OnGameCells),
+    new_hex(T, X, Y, C, 0, 1, Hex2),
+
+    delete(OnGameCells, Hex1, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
+    maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
+    append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
+    write_all(AllLadybugPathCells),
+    find_all_paths(AllLadybugPathCells, Row, Col, 4, Paths), !,
+    valid_paths(X, Y, Paths, ValidPaths),
+    write("Found:\n"),
+    write_all(ValidPaths),
+    length(ValidPaths, LVP),
+    LVP > 0,
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    get_color(Hex1, C), 
+    new_hex("pillbug", X, Y, C, 0, 1, Hex2),
+    adjacents(Hex1, Hex2),
+    can_move(Hex1, X, Y, OnGameCells),
+    find_hex(Hex1, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, Player_R),
+    not(occupied(X, Y, OnGameCells)),
+    get_all(MovingHex, T, Row, Col, Color, Height, OnGame),
+    Height is 0, % the hex being moved cannot be part of a stack of pieces
+    can_move(MovingHex, X, Y).
+
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
     get_row(Hex, Row), get_col(Hex, Col),
@@ -596,14 +629,6 @@ find_all_paths(OnGameCells, X, Y, Depth, Paths):-
     find_all_paths(OnGameCells, X, Y, D1, P2),
     append(P1,P2,Paths).
 
-find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
-    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
-    maplist(get_coordinates, OnGameCells, OG),
-    append(OG, Free_Cells, Board),
-    findall(P, dfs_path(X, Y, Depth, Board, _, P), V1),
-    % write_all(V1),
-    list_to_set(V1, P1),
-    reverse_all(P1, Paths).
 
 write_all([]):-write("\n").
 write_all([Head|Tail]):-
@@ -614,11 +639,13 @@ adjacents(Row1, Col1, Row2, Col2):-
     (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
     (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
 
+
 is_nb(X, Y, Nb, Visited):-
     nth0( 0, Nb, X1),
     nth0( 1, Nb, Y1),
     not(member([X1,Y1], Visited)),
     adjacents(X, Y, X1, Y1).
+
 
 neighbours(_, _, [], _, []).
 neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
