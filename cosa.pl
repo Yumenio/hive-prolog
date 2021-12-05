@@ -88,3 +88,14 @@ ant -1 1
 1 0 1 2
 
 
+init_game().
+pillbug 1 1
+queen 0 2
+queen 1 0
+ant 2 1
+beetle 1 -1
+beetle 1 3
+1 -1 1 0
+1 3 1 2
+1 1 0 2 2 0
+

@@ -138,14 +138,10 @@ higher([Head|Tail], Current_Higher, Higher):-
 
     ).
 
-find_all_at(Pos, [Hex|Tail], Hex1):- 
-    length(Pos, L), L is 2,
-    nth0(0, Pos, X),
-    nth0(1, Pos, Y),
-    ((get_all(Hex, _, Row1, Col1, _, _, OG1,_),
-    Row1 is X, Col1 is Y, OG1 is 1, 
-    Hex1 = Hex); 
-    find_all_at(Pos, Tail, Hex1)).
+find_all_at([X, Y], [Hex|Tail], Hex1):- 
+    get_all(Hex, _, Row1, Col1, _, _, OG1,_),
+    ( (Row1 is X, Col1 is Y, OG1 is 1, Hex1 = Hex);
+    find_all_at([X, Y], Tail, Hex1)).
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -217,8 +213,8 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
-    valid_place(Hex, Cells),
+    % new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+    % valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
@@ -380,8 +376,8 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     find_hex([HexOriginRow, HexOriginCol], OnGameCells, MovingHex),
     get_color(MovingHex, MovingHexColor),
     (
-        ( MovingHexColor is 2, NewPlayer1 = Player1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
-        ( MovingHexColor is 1, NewPlayer2 = Player2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
+        ( MovingHexColor is 2, NewPlayer1 = Player1, pillbug_special(PillbugHex, MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
+        ( MovingHexColor is 1, NewPlayer2 = Player2, pillbug_special(PillbugHex, MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
     )
         
     );
@@ -414,8 +410,8 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     find_hex([HexOriginRow, HexOriginCol], OnGameCells, MovingHex),
     get_color(MovingHex, MovingHexColor),
     (
-        ( MovingHexColor is 2, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
-        ( MovingHexColor is 1, pillbug_special(MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
+        ( MovingHexColor is 2, pillbug_special(PillbugHex, MovingHex, HexDestRow, HexDestCol, Player2, Player1, NewPlayer2));
+        ( MovingHexColor is 1, pillbug_special(PillbugHex, MovingHex, HexDestRow, HexDestCol, Player1, Player2, NewPlayer1))
     )
         
     );
@@ -458,14 +454,17 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     queen_on_game(OnGameCells, C),
     neighbours(Hex1, OnGameCells, Nbs), !,
     nth0(0, Nbs, Nb),
+    get_all(Nb, _, Nb_x, Nb_y, _, _, _, _),
     new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
     find_hex(Hex1, OnGameCells, 0, Pos),
     
     replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
     % onGameSingle(OG, OGC),
     include(is_on_game(), OG, OGC),
-    dfs(Nb, OGC, Result),
-    length(Result, L1), L1 is L-1,
+    maplist(get_coordinates, OGC, OGCoor),
+    cc_dfs( [Nb_x, Nb_y] , OGCoor, Max),
+    printall(["DFS from", Nb_x, Nb_y, "using", OGCoor, "resulted in", Max]),
+    Max is L-1,
     have_adjacent(X1, Y1, OnGameCells).
 
 
@@ -541,7 +540,7 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
-    
+
 beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     occupied(X, Y, OnGameCells),
@@ -588,14 +587,14 @@ pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     % find_hex(Hex1, Player, 0, Pos),
     % replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
+pillbug_special(PillbugHex, MovingHex, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(MovingHex, T, _, _, Color, Height, _, _),
-    Height is 0, % the hex being moved cannot be part of a stack of pieces
-    printall(OnGameCells),
+    get_all(MovingHex, T, _, _, Color, _, _, _),
+    % printall(OnGameCells),
     can_move(MovingHex, X, Y, OnGameCells), !,
-    
+    pillbug_can_carry(PillbugHex, [X, Y], OnGameCells),
+
     new_hex(T, X, Y, Color, 0, 1, 2, NewHex),
     find_hex(MovingHex, Player, 0, Pos),
     replace_nth0(Player, Pos, _, NewHex, Player_R).
@@ -626,6 +625,37 @@ mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
 mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
     Type = "pillbug",
     pillbug_move(Hex1, X, Y, Player, Opponent, Player_R).
+
+
+pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
+    get_all(PillbugHex, _, Row, Col, _, Height, _, Blocked),
+    maplist(get_coordinates, OnGameCells, OnGameCellsCoor),
+    Height is 0, % the hex being moved cannot be part of a stack of pieces
+    Blocked is 0, % the pillbug cannot move the last cell the opponent moved
+    findall([X1, Y1], onGame_adjacents(X1, Y1, OnGameCellsCoor, Row, Col), Adj1),
+    findall([X2, Y2], onGame_adjacents(X2, Y2, OnGameCellsCoor, X, Y), Adj2),
+    intersection(Adj1, Adj2, CommonAdjs),
+
+    % printall(["Adjacents to", Row, Col, "are", Adj1]),
+    % printall(["Adjacents to", X, Y, "are", Adj2]),
+    
+    % printall(["Common adjacents of", Row, Col, "and", X, Y, "are", CommonAdjs]),
+    not(two_common_of_height_two(CommonAdjs, OnGameCells)).
+
+onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
+    adjacents(X, Y, AdjX, AdjY),
+    member([X, Y], OnGameCellsCoordinates).
+
+two_common_of_height_two([[X, Y]|T], OnGameCells):-
+    find_hex([X, Y], OnGameCells, hex(_,Row,Col,_,Height,_,_)),
+    Height > 0, printall(["Found hex", Row, Col, "of height =", Height, "1/2"]), one_common_of_height_two(T, OnGameCells).
+two_common_of_height_two([_|T], OnGameCells):- two_common_of_height_two(T, OnGameCells).
+
+one_common_of_height_two([[X, Y]|_], OnGameCells):-
+    find_hex([X, Y], OnGameCells, hex(_,Row,Col,_,Height,_,_)),
+    Height = 1, printall(["Found hex", Row, Col, "of height =", Height, "2/2"]).
+one_common_of_height_two([_|T], OnGameCells):- one_common_of_height_two(T, OnGameCells).
+
 
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
@@ -836,6 +866,14 @@ length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
     reachable([X, Y], Adj, OnGameCells),
     length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path).
 
+cc_dfs([X, Y], Candidates, CC):-
+    cc_path([], [X, Y], Candidates, CC).
+
+cc_path(Visited, [X, Y], Candidates, CC):-
+    boku_no_adj([X, Y], Candidates, Visited, Adj),
+    cc_path([ [X, Y]| Visited], Adj, Candidates, CC).
+
+cc_path(Visited, _, _, Visited).
 
 boku_no_adj([X, Y], [ [HX, HY]|_], Stack, [HX, HY]):-
     not(member([HX, HY], Stack)),
