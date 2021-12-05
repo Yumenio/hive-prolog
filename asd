@@ -1,4 +1,5 @@
-% import(list_utils).
+:-use_module(board).
+
 
 get_type(Hex,Type):-       arg(1,Hex,Type).
 get_row(Hex,Row):-         arg(2,Hex,Row).
@@ -103,9 +104,6 @@ players(Player1,Player2):-
 player1(List):- init_player1(1, List).
 player2(List):- init_player2(2, List).
 
-list_print([]):- write("\n").
-list_print([Hex|Tail]):- write(Hex), write(" "), list_print(Tail).
-
 % onGameSingle([], []).
 % onGameSingle([Hex|Tail], List):- get_onGame(Hex, OnGame), ((OnGame is 1, onGameSingle(Tail, L), append([Hex], L, List)) ; onGameSingle(Tail, L), append([], L, List)).
 
@@ -183,7 +181,35 @@ valid_place(Cell, Cells):-
     length(Nbs,L), L > 0,
     get_color(Cell, C1), all_same_color(C1, Nbs).
 
-p(X):- write(X).
+get_first_letter(T, L):-
+    T = "queen",      L = "Q".
+get_first_letter(T, L):-
+    T = "ant",        L = "A".
+get_first_letter(T, L):-
+    T = "grasshoper", L = "G".
+get_first_letter(T, L):-
+    T = "beetle",     L = "B".
+get_first_letter(T, L):-
+    T = "spider",     L = "S".
+get_first_letter(T, L):-
+    T = "mosquito",   L = "M".
+get_first_letter(T, L):-
+    T = "pillbug",    L = "P".
+get_first_letter(T, L):-
+    T = "ladybug",    L = "L".
+get_color_letter(C, L):-
+    C is 1, L = "W".
+get_color_letter(C, L):-
+    C is 2, L = "B".
+
+convert_cells(Hex, Converted_Hex):-
+    get_type(Hex, T), get_first_letter(T, Letter), 
+    get_color(Hex, C), get_color_letter(C, Color),
+    concat(Color, Letter, Name), get_row(Hex, X), get_col(Hex, Y), 
+    Converted_Hex = [X, Y, Name].
+
+get_converted_cells(Cells, Converted_Cells):-
+    maplist(convert_cells, Cells, Converted_Cells).
 
 queen_on_game([H|T], Color):-
     get_color(H, C),
@@ -196,12 +222,6 @@ queen_on_game([H|T], Color):-
 
 valid_state(Cells, Turn, Color, Type):-
     queen_on_game(Cells, Color); Turn < 4; (Turn is 4, Type = "queen").
-
-% find_free_bug(_, [], -1).
-% find_free_bug(Type, [H|T], Pos):-
-%     (get_type(H, T), T is Type, length(T, L), Pos is L+1); 
-%     (find_free_bug(Type, T, Pos)).
-
 
 find_free_bug(_, [], _, -1).
 find_free_bug(Type, [H|T], Index, Pos):-
@@ -343,6 +363,13 @@ game(Player1,Player2, Turn):-
     successor(Turn,Turn1),
     game(NewPlayer12,NewPlayer22, Turn1).
 
+show_board(Player_1, Player_2):-
+    include(is_on_game(), Player_1, Player1),
+    include(is_on_game(), Player_2, Player2),
+    append(Player1, Player2, OnGameCells),
+    get_converted_cells(OnGameCells, Converted),
+    board(Converted, Board),
+    write(Board).
 
 turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     read_line_to_string(user_input, Raw_input),
@@ -580,16 +607,11 @@ pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
 pillbug_special(MovingHex, X, Y, Player, Opponent, Player_R):-
-    onGameCells(Player, Opponent, OnGameCells),
+    onGameCells(Player, Opponent, Player_R),
     not(occupied(X, Y, OnGameCells)),
-    get_all(MovingHex, T, _, _, Color, Height, _, _),
+    get_all(MovingHex, T, Row, Col, Color, Height, OnGame),
     Height is 0, % the hex being moved cannot be part of a stack of pieces
-    can_move(MovingHex, X, Y, OnGameCells),
-
-    new_hex(T, X, Y, Color, 0, 1, 2, NewHex),
-
-    find_hex(MovingHex, Player, 0, Pos),
-    replace_nth0(Player, Pos, _, NewHex, Player_R).
+    can_move(MovingHex, X, Y).
 
 
 find_grasshoper_paths(Hex, OnGameCells, Paths):-
@@ -659,14 +681,6 @@ find_all_paths(OnGameCells, X, Y, Depth, Paths):-
     find_all_paths(OnGameCells, X, Y, D1, P2),
     append(P1,P2,Paths).
 
-find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
-    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
-    maplist(get_coordinates, OnGameCells, OG),
-    append(OG, Free_Cells, Board),
-    findall(P, dfs_path(X, Y, Depth, Board, _, P), V1),
-    % write_all(V1),
-    list_to_set(V1, P1),
-    reverse_all(P1, Paths).
 
 write_all([]):-write("\n").
 write_all([Head|Tail]):-
@@ -676,6 +690,7 @@ adjacents(Row1, Col1, Row2, Col2):-
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
     (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
     (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
+
 
 is_nb(X, Y, Nb, Visited):-
     nth0( 0, Nb, X1),
