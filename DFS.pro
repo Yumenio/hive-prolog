@@ -487,9 +487,9 @@ can_move(Hex1, X1, Y1, OnGameCells):-
     % onGameSingle(OG, OGC),
     include(is_on_game(), OG, OGC),
     maplist(get_coordinates, OGC, OGCoor),
-    cc_dfs( [Nb_x, Nb_y] , OGCoor, Max),
-    printall(["DFS from", Nb_x, Nb_y, "using", OGCoor, "resulted in", Max]),
-    Max is L-1,
+    cc_bfs( [Nb_x, Nb_y] , OGCoor, CC),
+    printall(["DFS from", Nb_x, Nb_y, "using", OGCoor, "resulted in", CC]),
+    length(CC, CCNodes), CCNodes is L-1,
     have_adjacent(X1, Y1, OnGameCells).
 
 
@@ -892,14 +892,15 @@ length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
     reachable([X, Y], Adj, OnGameCells),
     length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path).
 
-cc_dfs([X, Y], Candidates, CC):-
-    cc_path([], [X, Y], Candidates, CC).
+cc_bfs([X, Y], Candidates, CC):-
+    cc_path([ [X, Y] ], [], Candidates, CC).
 
-cc_path(Visited, [X, Y], Candidates, CC):-
-    boku_no_adj([X, Y], Candidates, Visited, Adj),
-    cc_path([ [X, Y]| Visited], Adj, Candidates, CC).
+cc_path([Head|Queue], Visited, Candidates, CC):-
+    findall(Adj, boku_no_adj(Head, Candidates, Visited, Adj), Adjs),
+    union(Queue, Adjs, NewQueue),
+    cc_path(NewQueue, [Head|Visited], Candidates, CC).
 
-cc_path(Visited, _, _, Visited).
+cc_path([], Visited, _, Visited).
 
 boku_no_adj([X, Y], [ [HX, HY]|_], Stack, [HX, HY]):-
     not(member([HX, HY], Stack)),
