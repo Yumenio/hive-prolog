@@ -615,10 +615,11 @@ pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
 pillbug_special(PillbugHex, MovingHex, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_all(MovingHex, T, _, _, Color, _, _, _),
+    get_all(MovingHex, T, MVRow, MVCol, Color, _, _, _),
     % printall(OnGameCells),
     can_move(MovingHex, X, Y, OnGameCells), !,
     pillbug_can_carry(PillbugHex, [X, Y], OnGameCells),
+    pillbug_can_carry(PillbugHex, [MVRow, MVCol], OnGameCells),
 
     new_hex(T, X, Y, Color, 0, 1, 2, NewHex),
     find_hex(MovingHex, Player, 0, Pos),
@@ -665,21 +666,25 @@ pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
     % printall(["Adjacents to", X, Y, "are", Adj2]),
     
     % printall(["Common adjacents of", Row, Col, "and", X, Y, "are", CommonAdjs]),
-    not(two_common_of_height_two(CommonAdjs, OnGameCells)).
+    not(two_common_of_height_two(CommonAdjs, OnGameCells, [])).
 
 onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
     adjacents(X, Y, AdjX, AdjY),
     member([X, Y], OnGameCellsCoordinates).
 
-two_common_of_height_two([[X, Y]|T], OnGameCells):-
-    find_hex([X, Y], OnGameCells, hex(_,Row,Col,_,Height,_,_)),
-    Height > 0, printall(["Found hex", Row, Col, "of height =", Height, "1/2"]), one_common_of_height_two(T, OnGameCells).
-two_common_of_height_two([_|T], OnGameCells):- two_common_of_height_two(T, OnGameCells).
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
+    % printall(["looking for two cells of height >= 1, current is", X, Y, "tail = ",T, "  already analized:", Analized]),
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+    % printall(["Found hex", Row, Col, "of height =", Height, "1/2"])
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- two_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
 
-one_common_of_height_two([[X, Y]|_], OnGameCells):-
-    find_hex([X, Y], OnGameCells, hex(_,Row,Col,_,Height,_,_)),
-    Height = 1, printall(["Found hex", Row, Col, "of height =", Height, "2/2"]).
-one_common_of_height_two([_|T], OnGameCells):- one_common_of_height_two(T, OnGameCells).
+one_common_of_height_two([[X, Y]|_], OnGameCells, Analized):-
+    % printall(["looking for just one cell of height >= 1, current is", X, Y, "tail = ",T, "  already analized:", Analized]),
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    not(member([X, Y], Analized)),
+    Height > 0.%, printall(["Found hex", Row, Col, "of height =", Height, "2/2"]).
+one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
 
 
 
@@ -912,3 +917,4 @@ boku_no_adj(Hex, [Adj|_], Adj):-
     adjacents(Hex, Adj).
 boku_no_adj(Hex, [_|T], Adj):-
     boku_no_adj(Hex,T, Adj).
+

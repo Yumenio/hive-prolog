@@ -99,9 +99,13 @@ pillbug 1 1
 queen 0 2
 queen 1 0
 ant 2 1
-beetle 1 -1
+beetle 0 0
 beetle 2 2
-1 -1 1 0
+0 0 0 1
+2 2 1 2
+beetle 0 0
+beetle 2 2
+0 0 0 1
 2 2 1 2
 1 1 0 2 2 0
 
