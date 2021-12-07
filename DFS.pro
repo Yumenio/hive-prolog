@@ -138,22 +138,10 @@ higher([Head|Tail], Current_Higher, Higher):-
 
     ).
 
-<<<<<<< HEAD
-
-find_all_at(Pos, [Hex|Tail], Hex1):- 
-    length(Pos, L), L is 2,
-    nth0(0, Pos, X),
-    nth0(1, Pos, Y),
-    ((get_all(Hex, _, Row1, Col1, _, _, OG1,_),
-    Row1 is X, Col1 is Y, OG1 is 1, 
-    Hex1 = Hex); 
-    find_all_at(Pos, Tail, Hex1)).
-=======
 find_all_at([X, Y], [Hex|Tail], Hex1):- 
     get_all(Hex, _, Row1, Col1, _, _, OG1,_),
     ( (Row1 is X, Col1 is Y, OG1 is 1, Hex1 = Hex);
     find_all_at([X, Y], Tail, Hex1)).
->>>>>>> e63019c0f9a9db325c7adbf0f26a6cee284c2676
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -282,11 +270,7 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-<<<<<<< HEAD
-    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
-=======
     % new_hex(Type, X, Y, Color, _, 0, 0, Hex),
->>>>>>> e63019c0f9a9db325c7adbf0f26a6cee284c2676
     % valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
