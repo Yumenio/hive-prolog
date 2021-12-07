@@ -100,19 +100,18 @@ ant 0 2
 0 1 1 1
 
 
-bottom([Head|Tail], L, Index, Row):-
-    Head is 0, Next_Index is Index + 1, Pre_Index is Index-1,
-    nth0(Pre_Index, L, Pre), nth0(Index, L, Down), 
-    not(Pre is 0), not(Down is 0), S1 = " \\__/ ",
-    bottom(Tail, L, Next_Index, S2), concat(S1, S2, Row).
-bottom([Head|Tail], L, Index, Row):-
-        Head is 0, Next_Index is Index + 1, Pre_Index is Index-1,
-        nth0(Pre_Index, L, Pre), not(Pre is 0), S1 = " \\    ",
-        bottom(Tail, L, Next_Index, S2), concat(S1, S2, Row).
-bottom([Head|Tail], L, Index, Row):-
-        Head is 0, Next_Index is Index + 1,
-        nth0(Index, L, Down), not(Down is 0), S1 = "    / ",
-        bottom(Tail, L, Next_Index, S2), concat(S1, S2, Row).
-bottom([Head|Tail], L, Index, Row):-
-    Head is 0, Next_Index is Index + 1, S1 = "      ",
-    bottom(Tail, L, Next_Index, S2), concat(S1, S2, Row).
+init_game().
+pillbug 1 1
+queen 0 2
+queen 1 0
+ant 2 1
+beetle 0 0
+beetle 2 2
+0 0 0 1
+2 2 1 2
+beetle 0 0
+beetle 2 2
+0 0 0 1
+2 2 1 2
+1 1 0 2 2 0
+
