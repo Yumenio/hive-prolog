@@ -109,3 +109,9 @@ beetle 2 2
 2 2 1 2
 1 1 0 2 2 0
 
+init_game().
+queen 0 1
+queen 0 2
+ant 1 1
+spider 1 2
+test 1 1

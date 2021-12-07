@@ -379,7 +379,13 @@ show_board(Player_1, Player_2):-
 turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
-    (
+    ( % caso prueba
+    (length(Input,L1), L1 is 3,
+    parse_input_place(Raw_input, Type, Row, Col),
+    Type = "test",
+    test([Row, Col], Player1, Player2),
+    NewPlayer1 = Player1, NewPlayer2 = Player2);
+    
     % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
@@ -414,7 +420,13 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
 turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
-    ( % caso poner ficha
+    ( % caso prueba
+    (length(Input,L1), L1 is 1,
+    Raw_input = "test",
+    test(Player2, Player1),
+    NewPlayer1 = Player1, NewPlayer2 = Player2);
+    
+    % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
     place_hex(Turn, Type,Row,Col,2,Player1,Player2,NewPlayer2), NewPlayer1 = Player1 );
@@ -522,6 +534,18 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     write_all(Path),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+ant_path(Hex, Player, Opponent, Path):-
+    onGameCells(Player, Opponent, OnGameCells),
+    get_all(Hex, _, Row, Col, _, _, _, _),
+    freedom_to_move(Hex, OnGameCells),
+
+    delete(OnGameCells, Hex, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
+    full_dfs([Row, Col], Free_Cells, OnGameCells, Path).
+
+ant_path(_, _, _, []).
 
 spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -897,6 +921,20 @@ length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
     reachable([X, Y], Adj, OnGameCells),
     length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path).
 
+full_dfs([X, Y], Candidates, OnGameCells, Solution):-
+    write("aberlooking\n"),
+    any_path([], [X, Y], Candidates, OnGameCells, RevSolution),
+    reverse(RevSolution, Solution).
+
+any_path(Stack, [X, Y], _, _, [[X, Y]|Stack]):- length(Stack, L), L > 0, printall([ "Found", [ [X, Y]|Stack] ]).
+
+any_path(Stack, [X, Y], Candidates, OnGameCells, Path):-
+    printall(["current node", X, Y, ", path is", Stack]),
+    boku_no_adj([X, Y], Candidates, Stack, Adj),
+    reachable([X, Y], Adj, OnGameCells),
+    printall(["calling recursively with", Adj]),
+    any_path([ [X, Y] | Stack], Adj, Candidates, OnGameCells, Path).
+
 cc_bfs([X, Y], Candidates, CC):-
     cc_path([ [X, Y] ], [], Candidates, CC).
 
@@ -918,3 +956,26 @@ boku_no_adj(Hex, [Adj|_], Adj):-
 boku_no_adj(Hex, [_|T], Adj):-
     boku_no_adj(Hex,T, Adj).
 
+
+freedom_to_move(Hex, OnGameCells):-
+    length(OnGameCells, L),
+    get_all(Hex, Type, X, Y, Color, Height, _, Block),
+    queen_on_game(OnGameCells, Color),
+    find_hex(Hex, OnGameCells, 0, Pos),
+    new_hex(Type, X, Y, Color, Height, 0, Block, HexTemp),
+    replace_nth0(OnGameCells, Pos, _, HexTemp, OnGameCellsTemp),
+    include(is_on_game(), OnGameCellsTemp, OnGameRemaining),
+    maplist(get_coordinates, OnGameRemaining, OnGameRemainingCoor),
+    adjacents(AdjX, AdjY, X, Y),
+    cc_bfs([AdjX, AdjY], OnGameRemainingCoor, CC),
+    length(CC, CCNodes), CCNodes is L-1.
+
+
+test([X, Y], Player, Opponent):-
+    % onGameCells(Player, Opponent, OnGameCells),
+    find_hex([X,Y], Player, Hex),
+    % get_all(Hex, Type, Row, Col, Color, Height, _, Block),
+    % new_hex(Type, Row, Col, Color, Height, 0, Block, SubHex),
+    % find_hex(Hex, Player, 0, Pos),
+    findall(Path, ant_path(Hex, Player, Opponent, Path), AllAntPaths),
+    write_all(AllAntPaths).
