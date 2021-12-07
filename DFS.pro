@@ -569,14 +569,14 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-ant_path(Hex, Player, Opponent, Path):-
-    onGameCells(Player, Opponent, OnGameCells),
+ant_path(Hex, OnGameCells, Path):-
+    % onGameCells(Player, Opponent, OnGameCells),
     get_all(Hex, _, Row, Col, _, _, _, _),
     freedom_to_move(Hex, OnGameCells),
 
     delete(OnGameCells, Hex, OnGameCellsAux),
 
-    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),!,
     full_dfs([Row, Col], Free_Cells, OnGameCells, Path).
 
 ant_path(_, _, _, []).
@@ -599,6 +599,16 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+spider_path(Hex, OnGameCells, Path):-
+    % onGameCells(Player, Opponent, OnGameCells),
+    get_all(Hex, _, Row, Col, _, _, _, _),
+    freedom_to_move(Hex, OnGameCells),
+
+    delete(OnGameCells, Hex, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells), !,
+    length_dfs([Row, Col], 3, Free_Cells, OnGameCells, Path).
 
 grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -946,7 +956,7 @@ length_dfs([X, Y], Length, Candidates, OnGameCells, Solution):-
     reverse(RevSolution, Solution).
 
 length_path(Stack, [X, Y], Length, _, _, [[X, Y]|Stack]):-
-    printall(["Found",[[X,Y]|Stack] ]),
+    % printall(["Found",[[X,Y]|Stack] ]),
     length(Stack, StackLength), StackLength is Length.
 
 length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
@@ -960,13 +970,13 @@ full_dfs([X, Y], Candidates, OnGameCells, Solution):-
     any_path([], [X, Y], Candidates, OnGameCells, RevSolution),
     reverse(RevSolution, Solution).
 
-any_path(Stack, [X, Y], _, _, [[X, Y]|Stack]):- length(Stack, L), L > 0, printall([ "Found", [ [X, Y]|Stack] ]).
+any_path(Stack, [X, Y], _, _, [[X, Y]|Stack]):- length(Stack, L), L > 0. %, printall([ "Found", [ [X, Y]|Stack] ]).
 
 any_path(Stack, [X, Y], Candidates, OnGameCells, Path):-
-    printall(["current node", X, Y, ", path is", Stack]),
+    % printall(["current node", X, Y, ", path is", Stack]),
     boku_no_adj([X, Y], Candidates, Stack, Adj),
     reachable([X, Y], Adj, OnGameCells),
-    printall(["calling recursively with", Adj]),
+    % printall(["calling recursively with", Adj]),
     any_path([ [X, Y] | Stack], Adj, Candidates, OnGameCells, Path).
 
 cc_bfs([X, Y], Candidates, CC):-
@@ -1006,10 +1016,7 @@ freedom_to_move(Hex, OnGameCells):-
 
 
 test([X, Y], Player, Opponent):-
-    % onGameCells(Player, Opponent, OnGameCells),
     find_hex([X,Y], Player, Hex),
-    % get_all(Hex, Type, Row, Col, Color, Height, _, Block),
-    % new_hex(Type, Row, Col, Color, Height, 0, Block, SubHex),
-    % find_hex(Hex, Player, 0, Pos),
-    findall(Path, ant_path(Hex, Player, Opponent, Path), AllAntPaths),
+    onGameCells(Player, Opponent, OnGameCells),
+    findall(Path, spider_path(Hex, OnGameCells, Path), AllAntPaths),
     write_all(AllAntPaths).

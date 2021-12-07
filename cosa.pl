@@ -118,6 +118,7 @@ beetle 2 2
 init_game().
 queen 0 1
 queen 0 2
-ant 1 1
+spider 1 1
 spider 1 2
 test 1 1
+
