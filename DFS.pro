@@ -311,7 +311,8 @@ second_placed(Hex, Player2, Player2_R):-
     second_placed(Hex, Player2, Player2_R))
     ).
 
-get_coordinates(Hex, Coor):- get_row(Hex, Row), get_col(Hex, Col), Coor = [Row, Col].
+get_coordinates(hex(_, Row, Col, _, _, _, _), [Row, Col]). %- get_row(Hex, Row), get_col(Hex, Col), Coor = [Row, Col].
+get_coordinates([Row, Col], [Row, Col]).
 
 unblock(BlockedHex, UnblockedHex):-
     maplist(reduce_block(), BlockedHex, UnblockedHex).
@@ -514,10 +515,11 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "mosquito", mosquito_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
 
-have_adjacent(_, _, []).
-have_adjacent(X, Y, [Hex|Tail]):-
-    get_row(Hex, X1), get_col(Hex, Y1), 
-    (adjacents(X, Y, X1, Y1);have_adjacent(X, Y, Tail)).
+
+have_adjacent(X, Y, [hex(_,Row,Col,_,_,_,_)|_]):- adjacents(X, Y, Row, Col),!.
+have_adjacent(X, Y, [_|T]):- have_adjacent(X, Y, T).
+have_adjacent(_, _, []):- false().
+
 
 can_move(Hex1, X1, Y1, OnGameCells):-
     length(OnGameCells, L),
@@ -550,6 +552,20 @@ queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.    
+    
+queen_path(Hex, OnGameCells, Path):-
+    freedom_to_move(Hex, OnGameCells), !,
+    
+    get_row(Hex, Row), get_col(Hex, Col),
+    adjacents(AdjX, AdjY, Row, Col),
+    not(occupied(AdjX, AdjY, OnGameCells)),
+    
+    delete(OnGameCells, Hex, OnGameCellsTemp),
+    have_adjacent(AdjX, AdjY, OnGameCellsTemp),
+    Path = [[Row, Col], [AdjX, AdjY]].
+
+queen_path(_, _, []).
+
 
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -579,7 +595,8 @@ ant_path(Hex, OnGameCells, Path):-
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),!,
     full_dfs([Row, Col], Free_Cells, OnGameCells, Path).
 
-ant_path(_, _, _, []).
+ant_path(_, _, []).
+
 
 spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -601,7 +618,6 @@ spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
 spider_path(Hex, OnGameCells, Path):-
-    % onGameCells(Player, Opponent, OnGameCells),
     get_all(Hex, _, Row, Col, _, _, _, _),
     freedom_to_move(Hex, OnGameCells),
 
@@ -610,6 +626,9 @@ spider_path(Hex, OnGameCells, Path):-
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells), !,
     length_dfs([Row, Col], 3, Free_Cells, OnGameCells, Path).
 
+spider_path(_, _, []).
+
+
 grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
@@ -617,12 +636,17 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     can_move(Hex1, X, Y, OnGameCells), !,
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
-    find_grasshoper_paths(Hex1, OnGameCells, Paths),
-    valid_paths(X, Y, Paths, ValidPaths),
-    length(ValidPaths, LVP),
+    find_grasshoper_path(Hex1, OnGameCells, Path),
+    valid_paths(X, Y, Path, ValidPath),
+    length(ValidPath, LVP),
     LVP > 0,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+grasshoper_path(Hex, OnGameCells, Path):-
+    freedom_to_move(Hex, OnGameCells), !,
+    find_grasshoper_path(Hex, OnGameCells, Path).
+
 
 beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -631,6 +655,10 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
     can_move(Hex1, X, Y, OnGameCells),
+
+    delete(OnGameCells, Hex1, OnGameCellsTemp),
+
+    have_adjacent(X, Y, OnGameCellsTemp),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
@@ -645,7 +673,20 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
     can_move(Hex1, X, Y, OnGameCells), !,
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+beetle_path(Hex, OnGameCells, Path):-
+    freedom_to_move(Hex, OnGameCells), !,
     
+    
+    get_row(Hex, Row), get_col(Hex, Col),
+    adjacents(AdjX, AdjY, Row, Col),
+
+    delete(OnGameCells, Hex, OnGameCellsTemp),
+    have_adjacent(AdjX, AdjY, OnGameCellsTemp),
+    Path = [[Row, Col], [AdjX, AdjY]].
+    
+beetle_path(_, _, []).
+
 
 ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -656,7 +697,7 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     delete(OnGameCells, Hex1, OnGameCellsAux),
 
-    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells),
+    vecinos_void(OnGameCells, [], OnGameCells, Free_Cells), !,
     maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
     append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
     
@@ -669,16 +710,29 @@ ladybug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
+ladybug_path(Hex, OnGameCells, Path):-
+    get_all(Hex, _, Row, Col, _, _, _, _),
+    freedom_to_move(Hex, OnGameCells),
+
+    delete(OnGameCells, Hex, OnGameCellsAux),
+
+    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells), !,
+    maplist(get_coordinates, OnGameCellsAux, OnGameCellsAuxCoordinates),
+    append(Free_Cells, OnGameCellsAuxCoordinates, AllLadybugPathCells),
+    
+    ladybug_dfs([Row, Col], 3, AllLadybugPathCells, Path),
+
+    valid_ladybug_path(Path, OnGameCellsAuxCoordinates, Free_Cells).
+
+ladybug_path(_, _, []).
+
+
 pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     queen_move(Hex1, X, Y, Player, Opponent, Player_R).
-    % onGameCells(Player, Opponent, OnGameCells),
-    % not(occupied(X, Y, OnGameCells)),
-    % get_color(Hex1, C), get_type(Hex1, T),
-    % new_hex(T, X, Y, C, 0, 1, 2, Hex2),
-    % adjacents(Hex1, Hex2),
-    % can_move(Hex1, X, Y, OnGameCells),
-    % find_hex(Hex1, Player, 0, Pos),
-    % replace_nth0(Player, Pos, _, Hex2, Player_R).
+
+pillbug_path(Hex, OnGameCells, Path):-
+    queen_path(Hex, OnGameCells, Path).
+
 
 pillbug_special(PillbugHex, MovingHex, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
@@ -698,27 +752,35 @@ mosquito_move(Hex1, X, Y, Player, Opponent, Player_R):-
     boku_no_adj(Hex1, OnGameCells, Adj), get_type(Adj, T),
     mosquito_move_aux(Hex1, T, X, Y, Player, Opponent, Player_R).
     
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "queen",
+mosquito_move_aux(Hex1, "queen", X, Y, Player, Opponent, Player_R):-
     queen_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "beetle",
+mosquito_move_aux(Hex1, "beetle", X, Y, Player, Opponent, Player_R):-
     beetle_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "grasshoper",
+mosquito_move_aux(Hex1, "grasshoper", X, Y, Player, Opponent, Player_R):-
     grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "spider",
+mosquito_move_aux(Hex1, "spider", X, Y, Player, Opponent, Player_R):-
     spider_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "ant",
+mosquito_move_aux(Hex1, "ant", X, Y, Player, Opponent, Player_R):-
     ant_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "ladybug",
+mosquito_move_aux(Hex1, "ladybug", X, Y, Player, Opponent, Player_R):-
     ladybug_move(Hex1, X, Y, Player, Opponent, Player_R).
-mosquito_move_aux(Hex1, Type, X, Y, Player, Opponent, Player_R):-
-    Type = "pillbug",
+mosquito_move_aux(Hex1, "pillbug", X, Y, Player, Opponent, Player_R):-
     pillbug_move(Hex1, X, Y, Player, Opponent, Player_R).
+
+mosquito_path(Hex, OnGameCells, Path):-
+    freedom_to_move(Hex, OnGameCells), !,
+    
+    boku_no_adj(Hex, OnGameCells, Adj), get_type(Adj, T),
+
+    mosquito_path_aux(Hex, T, OnGameCells, Path).
+
+mosquito_path_aux(Hex, "queen", OnGameCells, Path):-
+    queen_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "beetle", OnGameCells, Path):-
+    beetle_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "grasshoper", OnGameCells, Path):-
+    grasshoper_path(Hex, OnGameCells, Path).
+
 
 
 pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
@@ -756,18 +818,60 @@ one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- one_common_of_heig
 
 
 
-find_grasshoper_paths(Hex, OnGameCells, Paths):-
+find_grasshoper_path(Hex, OnGameCells, Path):-
     get_row(Hex, Row), get_col(Hex, Col),
-    % successor(Row, Row1), predecessor(Row,Row_1),
-    % successor(Col, Col1), predecessor(Col, Col_1),
     straight_line(Row, Col, 1, 0, OnGameCells,[], R10),
+    maplist(get_coordinates, R10, Path),
+    length(Path, L), L > 2.
+
+find_grasshoper_path(Hex, OnGameCells, Path):-
+    get_row(Hex, Row), get_col(Hex, Col),
     straight_line(Row, Col, 0, 1, OnGameCells,[], R01),
+    maplist(get_coordinates, R01, Path),
+    length(Path, L), L > 2.
+
+find_grasshoper_path(Hex, OnGameCells, Path):-
+    get_row(Hex, Row), get_col(Hex, Col),
     straight_line(Row, Col, -1, 1, OnGameCells, [], R_11),
+    maplist(get_coordinates, R_11, Path),
+    length(Path, L), L > 2.
+    
+find_grasshoper_path(Hex, OnGameCells, Path):-
+    get_row(Hex, Row), get_col(Hex, Col),
     straight_line(Row, Col, -1, 0, OnGameCells, [], R_10),
+    maplist(get_coordinates, R_10, Path),
+    length(Path, L), L > 2.
+    
+find_grasshoper_path(Hex, OnGameCells, Path):-
+    get_row(Hex, Row), get_col(Hex, Col),    
     straight_line(Row, Col, 0, -1, OnGameCells, [], R0_1),
+    maplist(get_coordinates, R0_1, Path),
+    length(Path, L), L > 2.
+    
+
+find_grasshoper_path(Hex, OnGameCells, Path):-
+    get_row(Hex, Row), get_col(Hex, Col),
     straight_line(Row, Col, 1, -1, OnGameCells, [], R1_1),
-    append([[R10],[R01],[R_11],[R_10],[R0_1],[R1_1]], AllPaths),
-    include(path_greater_than_2(), AllPaths, Paths).
+    maplist(get_coordinates, R1_1, Path),
+    length(Path, L), L > 2.
+    
+    
+% find_grasshoper_paths(Hex, OnGameCells, Paths):-
+%     get_row(Hex, Row), get_col(Hex, Col),
+%     straight_line(Row, Col, 1, 0, OnGameCells,[], R10),
+%     maplist(get_coordinates, R10, R10Coor),
+%     straight_line(Row, Col, 0, 1, OnGameCells,[], R01),
+%     maplist(get_coordinates, R01, R01Coor),
+%     straight_line(Row, Col, -1, 1, OnGameCells, [], R_11),
+%     maplist(get_coordinates, R_11, R_11Coor),
+%     straight_line(Row, Col, -1, 0, OnGameCells, [], R_10),
+%     maplist(get_coordinates, R_10, R_10Coor),
+%     straight_line(Row, Col, 0, -1, OnGameCells, [], R0_1),
+%     maplist(get_coordinates, R0_1, R0_1Coor),
+%     straight_line(Row, Col, 1, -1, OnGameCells, [], R1_1),
+%     maplist(get_coordinates, R1_1, R1_1Coor),
+%     append([[R10Coor],[R01Coor],[R_11Coor],[R_10Coor],[R0_1Coor],[R1_1Coor]], AllPaths),
+%     include(path_greater_than_2(), AllPaths, Paths).
 
 
 find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
@@ -780,15 +884,15 @@ find_ladybug_paths(OnGameCells, X, Y, Depth, Paths):-
     reverse_all(P1, Paths).
 
 straight_line(Row, Col, _, _, OnGameCells, Acc, R):-
-    write("Checking for not occupied\n"),
+    % write("Checking for not occupied\n"),
     not(occupied(Row, Col, OnGameCells)),
-    printall(["End of line at", Row, Col, "appending to ", Acc]),
+    % printall(["End of line at", Row, Col, "appending to ", Acc]),
     append(Acc, [[Row,Col]],R).
 
 straight_line(Row, Col, DirRow, DirCol, OnGameCells, Acc, R):-
-    write("Checking for occupied\n"),
+    % write("Checking for occupied\n"),
     occupied(Row, Col, OnGameCells),
-    printall(["Jumping over", Row, Col, "appending to", Acc ]),
+    % printall(["Jumping over", Row, Col, "appending to", Acc ]),
     find_hex([Row, Col], OnGameCells, Hex),
     append(Acc, [Hex], Acc1),
     add(Row, DirRow, Row1), add(Col, DirCol, Col1),
@@ -850,7 +954,7 @@ write_all([]):-write("\n").
 write_all([Head|Tail]):-
     write(Head), write("\n"), write_all(Tail).
 
-adjacents(Row1, Col1, Row2, Col2):- 
+adjacents(Row1, Col1, Row2, Col2):-
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
     (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
     (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )).
@@ -951,6 +1055,22 @@ capped_path(Stack, [X, Y], Dest, Candidates, Cap, OnGameCells, Path):-
     capped_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, OnGameCells, Path).
 
 
+ladybug_dfs([X, Y], Length, Candidates, Solution):-
+    printall(["Candidates are", Candidates]),
+    get_ladybug_path([], [X, Y], Length, Candidates, RevSolution),
+    reverse(RevSolution, Solution).
+
+get_ladybug_path(Stack, [X, Y], Length, _, [[X, Y]|Stack]):-
+    length(Stack, StackLength), printall(["Is", Stack, "of Length =", Length]), StackLength is Length, printall(["Found", [[X,Y]|Stack]]).
+
+get_ladybug_path(Stack, [X, Y], Length, Candidates, Path):-
+    length(Stack, StackLength), StackLength < Length,
+    printall(["Current node is", X, Y, "path = ", Stack]),
+    boku_no_adj([X, Y], Candidates, Stack, Adj),
+    printall(["Calling recursively with", Adj]), write("\n"),
+    get_ladybug_path([[X, Y]|Stack], Adj, Length, Candidates, Path).
+
+
 length_dfs([X, Y], Length, Candidates, OnGameCells, Solution):-
     length_path([], [X, Y], Length, Candidates, OnGameCells, RevSolution),
     reverse(RevSolution, Solution).
@@ -1018,5 +1138,6 @@ freedom_to_move(Hex, OnGameCells):-
 test([X, Y], Player, Opponent):-
     find_hex([X,Y], Player, Hex),
     onGameCells(Player, Opponent, OnGameCells),
-    findall(Path, spider_path(Hex, OnGameCells, Path), AllAntPaths),
-    write_all(AllAntPaths).
+    findall(Path, mosquito_path(Hex, OnGameCells, Path), AllAntPaths),
+    list_to_set(AllAntPaths, AllAntPathsSingle),
+    write_all(AllAntPathsSingle).
