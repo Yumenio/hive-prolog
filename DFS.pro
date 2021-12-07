@@ -223,6 +223,14 @@ check_for_highests([Head|Tail], L, Result):-
     higher(Filtered, Current_Higher, Higher),
     check_for_highests(Tail, L, R), 
     append([Higher], R, Result).
+% check_for_highests([Head|Tail], L, Result):-
+%     write(Head), write(" segundo caso\n"),
+%     get_row(Head, X), get_col(Head, Y),
+%     include(check_coordinates(X, Y), L, Filtered),
+%     length(Filtered, Len), Len > 1, nth0(0, Filtered, Current_Higher),
+%     higher(Filtered, Current_Higher, Higher),
+%     check_for_highests(Tail, L, R), 
+%     append([Higher], R, Result).
     
 
 
