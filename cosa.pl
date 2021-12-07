@@ -85,13 +85,19 @@ ant 1 2
 ant 0 2
 0 1 1 1
 
+init_game().
+queen 1 1
+queen 1 2
+ant 1 0
 
 init_game().
-spider 1 0
-queen 1 1
-queen 0 0
-ant -1 1
-1 0 1 2
+ant 0 1
+queen 1 0
+queen 2 0
+ant 2 1
+ant 1 2
+ant 0 2
+0 1 1 1
 
 
 init_game().

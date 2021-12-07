@@ -138,10 +138,22 @@ higher([Head|Tail], Current_Higher, Higher):-
 
     ).
 
+<<<<<<< HEAD
+
+find_all_at(Pos, [Hex|Tail], Hex1):- 
+    length(Pos, L), L is 2,
+    nth0(0, Pos, X),
+    nth0(1, Pos, Y),
+    ((get_all(Hex, _, Row1, Col1, _, _, OG1,_),
+    Row1 is X, Col1 is Y, OG1 is 1, 
+    Hex1 = Hex); 
+    find_all_at(Pos, Tail, Hex1)).
+=======
 find_all_at([X, Y], [Hex|Tail], Hex1):- 
     get_all(Hex, _, Row1, Col1, _, _, OG1,_),
     ( (Row1 is X, Col1 is Y, OG1 is 1, Hex1 = Hex);
     find_all_at([X, Y], Tail, Hex1)).
+>>>>>>> e63019c0f9a9db325c7adbf0f26a6cee284c2676
 
 find_hex(_, [], _, -1):- 2 is 1.
 find_hex(Hex, [H|T], Index, Pos):-
@@ -200,6 +212,38 @@ get_color_letter(C, L):-
 get_color_letter(C, L):-
     C is 2, L = "B".
 
+check_coordinates(X, Y, Hex):-
+    get_row(Hex, X1), get_col(Hex, Y1),
+    X1 is X, Y1 is Y.
+check_for_highests([], _, []).
+check_for_highests([Head|Tail], L, Result):-
+    get_row(Head, X), get_col(Head, Y),
+    include(check_coordinates(X, Y), L, Filtered),
+    write(Tail), write(" primer caso\n"),
+    length(Filtered, Len), Len is 1, check_for_highests(Tail, L, R), 
+    append(Filtered, R, Result).
+check_for_highests([Head|Tail], L, Result):-
+    write(Head), write(" segundo caso\n"),
+    get_row(Head, X), get_col(Head, Y),
+    include(check_coordinates(X, Y), L, Filtered),
+    length(Filtered, Len), Len > 1, nth0(0, Filtered, Current_Higher),
+    higher(Filtered, Current_Higher, Higher),
+    check_for_highests(Tail, L, R), 
+    append([Higher], R, Result).
+% check_for_highests([Head|Tail], L, Result):-
+%     write(Head), write(" segundo caso\n"),
+%     get_row(Head, X), get_col(Head, Y),
+%     include(check_coordinates(X, Y), L, Filtered),
+%     length(Filtered, Len), Len > 1, nth0(0, Filtered, Current_Higher),
+%     higher(Filtered, Current_Higher, Higher),
+%     check_for_highests(Tail, L, R), 
+%     append([Higher], R, Result).
+    
+
+
+% revisar uno por uno y buscar cuantos en esa posicion, 
+% si hay mas de uno quedarse con el higher
+
 convert_cells(Hex, Converted_Hex):-
     get_type(Hex, T), get_first_letter(T, Letter), 
     get_color(Hex, C), get_color_letter(C, Color),
@@ -207,7 +251,9 @@ convert_cells(Hex, Converted_Hex):-
     Converted_Hex = [X, Y, Name].
 
 get_converted_cells(Cells, Converted_Cells):-
-    maplist(convert_cells, Cells, Converted_Cells).
+    check_for_highests(Cells, Cells, CC),
+    maplist(convert_cells, CC, Converted_Cells).
+
 
 queen_on_game([hex(Type, _, _, Color, _, OnGame, _)|_], PlayerColor):-
     Type = "queen", Color = PlayerColor, OnGame is 1.
@@ -236,7 +282,11 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
+<<<<<<< HEAD
+    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+=======
     % new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+>>>>>>> e63019c0f9a9db325c7adbf0f26a6cee284c2676
     % valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
@@ -373,6 +423,7 @@ show_board(Player_1, Player_2):-
     include(is_on_game(), Player_2, Player2),
     append(Player1, Player2, OnGameCells),
     get_converted_cells(OnGameCells, Converted),
+
     board(Converted, Board),
     write(Board).
 
@@ -531,7 +582,6 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
     valid_path_end(Path, [X, Y]),
 
-    write_all(Path),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
