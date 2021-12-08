@@ -1138,6 +1138,6 @@ freedom_to_move(Hex, OnGameCells):-
 test([X, Y], Player, Opponent):-
     find_hex([X,Y], Player, Hex),
     onGameCells(Player, Opponent, OnGameCells),
-    findall(Path, mosquito_path(Hex, OnGameCells, Path), AllAntPaths),
+    findall(Path, grasshoper_path(Hex, OnGameCells, Path), AllAntPaths),
     list_to_set(AllAntPaths, AllAntPathsSingle),
     write_all(AllAntPathsSingle).
