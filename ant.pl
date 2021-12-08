@@ -18,7 +18,7 @@ ant_path(Hex, OnGameCells, Path):-
     get_all(Hex, _, Row, Col, _, _, _, _),
     freedom_to_move(Hex, OnGameCells),
     delete(OnGameCells, Hex, OnGameCellsAux),
-    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),!,
+    empty_neighbours(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),!,
     full_dfs([Row, Col], Free_Cells, OnGameCells, Path).
 
 ant_path(_, _, []).

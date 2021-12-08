@@ -10,7 +10,7 @@
     freedom_to_move/2, queen_on_game/2, valid_state/4, place_hex/8, can_place_hex/6,
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
-    find_all_at/3, neighbours/3, print_hex_board/2,
+    find_all_at/3, neighbours/3, print_hex_board/2, true_path/3,
 
     there_is_a_path/3
     ]).
@@ -94,7 +94,7 @@ queen_on_game([hex("queen", _, _, Color, _, OnGame, _)|_], PlayerColor):-
 queen_on_game([_|T], PlayerColor):- queen_on_game(T, PlayerColor).
 
 freedom_to_move(Hex, OnGameCells):-
-    length(OnGameCells, L),
+    not(buried(Hex, OnGameCells)),
     get_all(Hex, Type, X, Y, Color, Height, _, Block),
     queen_on_game(OnGameCells, Color),
     find_hex(Hex, OnGameCells, 0, Pos),
@@ -102,9 +102,14 @@ freedom_to_move(Hex, OnGameCells):-
     replace_nth0(OnGameCells, Pos, _, HexTemp, OnGameCellsTemp),
     include(is_on_game(), OnGameCellsTemp, OnGameRemaining),
     maplist(get_coordinates, OnGameRemaining, OnGameRemainingCoor),
-    adjacents(AdjX, AdjY, X, Y),
-    cc_bfs([AdjX, AdjY], OnGameRemainingCoor, CC),
-    length(CC, CCNodes), CCNodes is L-1.
+    list_to_set(OnGameRemainingCoor, OnGameRemainingCoorSet),
+    length(OnGameRemainingCoorSet, L),
+    adjacents(AdjX, AdjY, X, Y), occupied(AdjX, AdjY, OnGameCells),
+    cc_bfs([AdjX, AdjY], OnGameRemainingCoorSet, CC),
+    length(CC, CCNodes), CCNodes is L.
+
+buried(hex(_, Row, Col, _, H1, _, _), [hex(_, Row, Col, _, H2, _, _)|_]):- H2 > H1.
+buried(Hex, [_|T]):- buried(Hex, T).
 
 adjacents(hex(_, Row1, Col1, _, _, _, _), hex(_, Row2, Col2, _, _, _, _)):- 
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );

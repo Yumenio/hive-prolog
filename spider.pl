@@ -18,7 +18,7 @@ spider_path(Hex, OnGameCells, Path):-
     get_all(Hex, _, Row, Col, _, _, _, _),
     freedom_to_move(Hex, OnGameCells),
     delete(OnGameCells, Hex, OnGameCellsAux),
-    vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells), !,
+    empty_neighbours(OnGameCellsAux, [], OnGameCellsAux, Free_Cells), !,
     length_dfs([Row, Col], 3, Free_Cells, OnGameCells, Path).
 
 spider_path(_, _, []).

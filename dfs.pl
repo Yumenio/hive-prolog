@@ -31,10 +31,12 @@ dfs_path([H|T], Deep, L, Visited, T1):-
     dfs_path(Nbs, Deep1, L, [H|Visited], T1).
 
 single_dfs([X, Y], Dest, Candidates, OnGameCells, Solution):-
+    % maplist(get_coordinates, Candidates, MappedCandidates),
     single_path([], [X, Y], Dest, Candidates, OnGameCells, RevSolution),
     reverse(RevSolution, Solution).
 
-single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack]). 
+single_path(Stack, [X, Y], [X, Y], _, _, [[X, Y]|Stack]). % : write("Found:\n"), write_all([[X, Y]|Stack]).
+
 single_path(Stack, [X, Y], Dest, Candidates, OnGameCells, Sol):-
     boku_no_adj([X, Y], Candidates, Stack, Adj),
     reachable([X, Y], Adj, OnGameCells),
@@ -45,12 +47,11 @@ capped_dfs([X, Y], Dest, Candidates, Cap, Solution):-
     capped_path([], [X, Y], Dest, Candidates, Cap, RevSolution),
     reverse(RevSolution, Solution).
     
-capped_path(Stack, [X, Y], [X, Y], _, Cap, [[X, Y]|Stack]):- 
-    length(Stack, StackLength), StackLength is Cap.
+capped_path(Stack, [X, Y], [X, Y], _, Cap, [[X, Y]|Stack]):- length(Stack, StackLength), StackLength is Cap.
 
 capped_path(Stack, [X, Y], Dest, Candidates, Cap, Path):-
     length(Stack, PathLength), PathLength < Cap,
-    boku_no_adj([X, Y], Candidates, Adj),
+    boku_no_adj([X, Y], Candidates, Stack, Adj),
     capped_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, Path).
 
 length_dfs([X, Y], Length, Candidates, OnGameCells, Solution):-
@@ -70,7 +71,7 @@ full_dfs([X, Y], Candidates, OnGameCells, Solution):-
     any_path([], [X, Y], Candidates, OnGameCells, RevSolution),
     reverse(RevSolution, Solution).
 
-any_path(Stack, [X, Y], _, _, [[X, Y]|Stack]):- length(Stack, L), L > 0. %, printall([ "Found", [ [X, Y]|Stack] ]).
+any_path(Stack, [X, Y], _, _, [[X, Y]|Stack]):- length(Stack, L), L > 0. 
 
 any_path(Stack, [X, Y], Candidates, OnGameCells, Path):-
     boku_no_adj([X, Y], Candidates, Stack, Adj),
