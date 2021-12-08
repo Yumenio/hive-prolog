@@ -1,3 +1,7 @@
+:- module(pillbug, [pillbug_move/6, pillbug_path/3, pillbug_special/7]).
+:- use_module(queen).
+:- use_module(utils).
+
 pillbug_move(Hex1, X, Y, Player, Opponent, Player_R):-
     queen_move(Hex1, X, Y, Player, Opponent, Player_R).
 
@@ -24,3 +28,20 @@ pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
     findall([X2, Y2], onGame_adjacents(X2, Y2, OnGameCellsCoor, X, Y), Adj2),
     intersection(Adj1, Adj2, CommonAdjs),
     not(two_common_of_height_two(CommonAdjs, OnGameCells, [])).
+
+
+onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
+    adjacents(X, Y, AdjX, AdjY),
+    member([X, Y], OnGameCellsCoordinates).
+
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    two_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+
+one_common_of_height_two([[X, Y]|_], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    not(member([X, Y], Analized)), Height > 0.
+one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).

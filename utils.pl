@@ -10,7 +10,7 @@
     freedom_to_move/2, queen_on_game/2, valid_state/4, place_hex/8, can_place_hex/6,
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
-    find_all_at/3, %neighbours/3, print_hex_board/2,
+    find_all_at/3, neighbours/3, print_hex_board/2,
 
     there_is_a_path/3
     ]).
@@ -373,7 +373,23 @@ parse_input_special(Raw_input, R1, C1, R2, C2, R3, C3):-
     atom_number(C_3,C3).
 
 
+find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
+    empty_neighbours(OnGameCells, [], OnGameCells, Free_Cells),
+    findall(P, dfs_path(X, Y, Depth, Free_Cells, _, P), V1),
+    list_to_set(V1, P1),
+    reverse_all(P1, Paths).
 
+find_all_paths(_,_,_,1,[]).
+find_all_paths(OnGameCells, X, Y, Depth, Paths):-
+    find_depth_paths(OnGameCells,X,Y,Depth,P1),
+    predecessor(Depth,D1),
+    find_all_paths(OnGameCells, X, Y, D1, P2),
+    append(P1,P2,Paths).
+
+neighbours(_, _, [], _, []).
+neighbours(X, Y, [Nb|Tail], Visited, Nbs):- 
+    (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
+    neighbours(X, Y, Tail, Visited, Nbs).
 
 
 

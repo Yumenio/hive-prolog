@@ -1,3 +1,6 @@
+:- module(ant, [ant_move/6, ant_path/3]).
+:- use_module(utils).
+
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
@@ -11,13 +14,11 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
-ant_path(_, _, []).
 ant_path(Hex, OnGameCells, Path):-
-    % onGameCells(Player, Opponent, OnGameCells),
     get_all(Hex, _, Row, Col, _, _, _, _),
     freedom_to_move(Hex, OnGameCells),
-
     delete(OnGameCells, Hex, OnGameCellsAux),
-
     vecinos_void(OnGameCellsAux, [], OnGameCellsAux, Free_Cells),!,
     full_dfs([Row, Col], Free_Cells, OnGameCells, Path).
+
+ant_path(_, _, []).
