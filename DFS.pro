@@ -119,6 +119,9 @@ is_on_game(Hex):- get_onGame(Hex, OG), OG is 1.
 
 % devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve falso.
 
+find_queen(Color, [hex("queen", Row, Col, Color, Height, OnGame, Block)|_], hex("queen", Row, Col, Color, Height, OnGame, Block)).
+find_queen(Color, [_|Tail], Hex):- find_queen(Color, Tail, Hex).
+
 find_hex(Pos, L, Hex1):-
     findall(Hex, find_all_at(Pos, L, Hex), Hexs),
     length(Hexs, Len), Len > 0,
@@ -780,6 +783,16 @@ mosquito_path_aux(Hex, "beetle", OnGameCells, Path):-
     beetle_path(Hex, OnGameCells, Path).
 mosquito_path_aux(Hex, "grasshoper", OnGameCells, Path):-
     grasshoper_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "ant", OnGameCells, Path):-
+    ant_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "spider", OnGameCells, Path):-
+    spider_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "ladybug", OnGameCells, Path):-
+    ladybug_path(Hex, OnGameCells, Path).
+mosquito_path_aux(Hex, "pillbug", OnGameCells, Path):-
+    pillbug_path(Hex, OnGameCells, Path).
+
+mosquito_path_aux(_, "mosquito", _, []).
 
 
 
@@ -1086,7 +1099,6 @@ length_path(Stack, [X, Y], Length, Candidates, OnGameCells, Path):-
     length_path([[X, Y]|Stack], Adj, Length, Candidates, OnGameCells, Path).
 
 full_dfs([X, Y], Candidates, OnGameCells, Solution):-
-    write("aberlooking\n"),
     any_path([], [X, Y], Candidates, OnGameCells, RevSolution),
     reverse(RevSolution, Solution).
 
@@ -1135,9 +1147,117 @@ freedom_to_move(Hex, OnGameCells):-
     length(CC, CCNodes), CCNodes is L-1.
 
 
-test([X, Y], Player, Opponent):-
-    find_hex([X,Y], Player, Hex),
+test([_, _], Player, Opponent):-
+    playerMovements(Player, Opponent, AllMoves),
+    write_all(AllMoves),
+    maplist(evaluate_movements(Player, Opponent), AllMoves, AllValues),
+    write_all(AllMoves),
+    printall(["Evaluation of movements:", AllValues]).
+
+
+    % find_hex([X,Y], Player, Hex),
+    % onGameCells(Player, Opponent, OnGameCells),
+    % findall(Path, grasshoper_path(Hex, OnGameCells, Path), AllAntPaths),
+    % list_to_set(AllAntPaths, AllAntPathsSingle),
+    % write_all(AllAntPathsSingle).
+
+
+% minimax(Player, Opponent, Depth, Move):-
+%     onGameCells(Player, Opponent, OnGameCells),
+%     playerMovements(Player, Opponent, Movements).
+
+
+join_paths([], []).
+join_paths([Head|Tail], Result):-
+    join_paths(Tail, Result1),
+    append(Head, Result1, Result).
+
+playerMovements(Player, Opponent, AllMovements):-
     onGameCells(Player, Opponent, OnGameCells),
-    findall(Path, grasshoper_path(Hex, OnGameCells, Path), AllAntPaths),
-    list_to_set(AllAntPaths, AllAntPathsSingle),
-    write_all(AllAntPathsSingle).
+    maplist(get_hex_moves(OnGameCells), Player, Result),
+    join_paths(Result, AllMovements).
+
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "queen"), get_onGame(Hex, 1),
+    findall(Path, queen_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "grasshoper"), get_onGame(Hex, 1),
+    findall(Path, grasshoper_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "beetle"), get_onGame(Hex, 1),
+    findall(Path, beetle_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "spider"), get_onGame(Hex, 1),
+    findall(Path, spider_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "ant"), get_onGame(Hex, 1),
+    findall(Path, ant_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "ladybug"), get_onGame(Hex, 1),
+    findall(Path, ladybug_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "pillbug"), get_onGame(Hex, 1),
+    findall(Path, pillbug_path(Hex, OnGameCells, Path), HexMovements).
+get_hex_moves(OnGameCells, Hex, HexMovements):-
+    get_type(Hex, "mosquito"), get_onGame(Hex, 1),
+    findall(Path, mosquito_path(Hex, OnGameCells, Path), HexMovements).
+
+get_hex_moves(_, _, []).
+
+
+evaluate_movements(Player, Opponent, Movement, Value):- % to use with maplist() over the movement list
+    nth0(0, Movement, HexPos),
+    % printall(["Evaluating", Movement]),
+    last(Movement, DestPos),
+    find_hex(HexPos, Player, Hex),
+    evaluate_hex_movement(Hex, DestPos, Player, Opponent, Value).
+
+evaluate_hex_movement(hex(Type, Row, Col, Color, Height, OnGame, Block), [X, Y], Player, Opponent, Value):-
+    find_hex(hex(Type, Row, Col, Color, Height, OnGame, Block), Player, 0, Pos),
+    new_hex(Type, X, Y, Color, Height, OnGame, Block,HexTemp),
+    replace_nth0(Player, Pos, _, HexTemp, Player_R),
+    evaluate_after_before(Player, Opponent, Player_R, Value).
+
+
+evaluate_after_before(PlayerBefore, Opponent, PlayerAfter, Value):-
+    nth0(0,PlayerBefore, hex(_, _, _, PlayerColor, _, _, _)),
+    onGameCells(PlayerBefore, Opponent, OnGameCellsBefore),
+    onGameCells(PlayerAfter, Opponent, OnGameCellsAfter),
+    surrounding_queen_count(PlayerColor, OnGameCellsBefore, BeforePlayerCount, BeforeOpponentCount),
+    surrounding_queen_count(PlayerColor, OnGameCellsAfter, AfterPlayerCount, AfterOpponentCount),
+    (
+        (
+            AfterPlayerCount = 6, Value = -1000
+        )
+        ;
+        (
+            AfterOpponentCount = 6, Value = 1000
+        )
+        ;
+        (
+            Value is ( BeforePlayerCount - AfterPlayerCount) + ( AfterOpponentCount - BeforeOpponentCount)
+        )
+    ).
+
+surrounding_queen_count(PlayerColor, OnGameCells, PlayerCount, OpponentCount):-
+    find_queen(PlayerColor, OnGameCells, PlayerQueen),
+    neighbours(PlayerQueen, OnGameCells, QueenSurrounders), !,
+    length(QueenSurrounders, PlayerCount),
+    
+    opponent_color(PlayerColor, OpponentColor),
+    (
+        (   % enemy queen in game
+            find_queen(OpponentColor, OnGameCells, OpponentQueen),
+            neighbours(OpponentQueen, OnGameCells, OpponentSurrounders), !,
+            length(OpponentSurrounders, OpponentCount)
+        )
+        ;
+        (   % enemy queen not in game
+            OpponentCount = 0    
+        )
+    
+    ).
+
+
+opponent_color(1, 2).
+opponent_color(2, 1).

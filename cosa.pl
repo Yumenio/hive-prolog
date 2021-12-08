@@ -123,3 +123,14 @@ grasshoper 1 1
 grasshoper 1 2
 test 1 1
 
+
+init_game().
+ant 0 1
+queen 1 1
+queen 2 0
+ant 2 1
+ant 1 2
+ant 0 2
+ant 0 0
+spider 1 3
+test 0 0
