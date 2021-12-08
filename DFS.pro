@@ -460,9 +460,10 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
     ( % caso prueba
-    (length(Input,L1), L1 is 1,
-    Raw_input = "test",
-    test(Player2, Player1),
+    (length(Input,L1), L1 is 3,
+    parse_input_place(Raw_input, Type, Row, Col),
+    Type = "test",
+    test([Row, Col], Player2, Player1),
     NewPlayer1 = Player1, NewPlayer2 = Player2);
     
     % caso poner ficha
@@ -548,19 +549,22 @@ can_move(Hex1, X1, Y1, OnGameCells):-
 queen_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
-    get_color(Hex1, C), get_type(Hex1, T),
+    get_all(Hex1, T, Row, Col, C, _, _, _),
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
     adjacents(Hex1, Hex2),
+    reachable([Row, Col], [X, Y], OnGameCells),
     can_move(Hex1, X, Y, OnGameCells),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
     %Faltaria verificar que puede meterse ahi.    
     
 queen_path(Hex, OnGameCells, Path):-
+    % printall(["Checking OnGameCells=", OnGameCells]),
     freedom_to_move(Hex, OnGameCells), !,
-    
+
     get_row(Hex, Row), get_col(Hex, Col),
     adjacents(AdjX, AdjY, Row, Col),
+    reachable([Row, Col], [AdjX, AdjY], OnGameCells),
     not(occupied(AdjX, AdjY, OnGameCells)),
     
     delete(OnGameCells, Hex, OnGameCellsTemp),
@@ -591,7 +595,7 @@ ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
 ant_path(Hex, OnGameCells, Path):-
     % onGameCells(Player, Opponent, OnGameCells),
     get_all(Hex, _, Row, Col, _, _, _, _),
-    freedom_to_move(Hex, OnGameCells),
+    freedom_to_move(Hex, OnGameCells), !,
 
     delete(OnGameCells, Hex, OnGameCellsAux),
 
@@ -679,7 +683,6 @@ beetle_move(Hex1, X, Y, Player, Opponent, Player_R):-
 
 beetle_path(Hex, OnGameCells, Path):-
     freedom_to_move(Hex, OnGameCells), !,
-    
     
     get_row(Hex, Row), get_col(Hex, Col),
     adjacents(AdjX, AdjY, Row, Col),
@@ -1134,7 +1137,8 @@ boku_no_adj(Hex, [_|T], Adj):-
 
 
 freedom_to_move(Hex, OnGameCells):-
-    length(OnGameCells, L),
+    not(buried(Hex, OnGameCells)),
+    % length(OnGameCells, L),
     get_all(Hex, Type, X, Y, Color, Height, _, Block),
     queen_on_game(OnGameCells, Color),
     find_hex(Hex, OnGameCells, 0, Pos),
@@ -1142,29 +1146,43 @@ freedom_to_move(Hex, OnGameCells):-
     replace_nth0(OnGameCells, Pos, _, HexTemp, OnGameCellsTemp),
     include(is_on_game(), OnGameCellsTemp, OnGameRemaining),
     maplist(get_coordinates, OnGameRemaining, OnGameRemainingCoor),
-    adjacents(AdjX, AdjY, X, Y),
-    cc_bfs([AdjX, AdjY], OnGameRemainingCoor, CC),
-    length(CC, CCNodes), CCNodes is L-1.
+    list_to_set(OnGameRemainingCoor, OnGameRemainingCoorSet),
+    length(OnGameRemainingCoorSet, L),
+    % printall(["There are", L, "cells on game, trying to cover L-1 in a dfs"]),
+    % printall(["DFSing over", OnGameRemainingCoorSet]),
+    adjacents(AdjX, AdjY, X, Y), occupied(AdjX, AdjY, OnGameCells),
+    cc_bfs([AdjX, AdjY], OnGameRemainingCoorSet, CC),
+    % printall(["Looking if", Hex, "is free to move, CC=", CC]),
+    length(CC, CCNodes), CCNodes is L.
 
+buried(hex(_, Row, Col, _, H1, _, _), [hex(_, Row, Col, _, H2, _, _)|_]):- H2 > H1.
+buried(Hex, [_|T]):- buried(Hex, T).
 
-test([_, _], Player, Opponent):-
-    playerMovements(Player, Opponent, AllMoves),
-    write_all(AllMoves),
-    maplist(evaluate_movements(Player, Opponent), AllMoves, AllValues),
-    write_all(AllMoves),
-    printall(["Evaluation of movements:", AllValues]).
+test([_, _], Player, Opponent):- minimax(2, Player, Opponent, _).
+% test([_, _], Player, Opponent):-
+%     playerMovements(Player, Opponent, AllMoves),
+%     write_all(AllMoves).
+    % maplist(evaluate_movements(Player, Opponent), AllMoves, AllValues),
+    % write_all(AllMoves),
+    % printall(["Evaluation of movements:", AllValues]).
 
+    
+    % depth = 2, always
+minimax(2, Player, Opponent, BestMove):-
+    playerMovements(Player, Opponent, AllMovements),
+    write_all(AllMovements),
+    maplist(evaluate_movements(Player, Opponent), AllMovements, AllValues),
+    maplist(minimax(1, Player, Opponent), AllMovements, AllValues, R2Values),
+    write_all(R2Values).
 
-    % find_hex([X,Y], Player, Hex),
-    % onGameCells(Player, Opponent, OnGameCells),
-    % findall(Path, grasshoper_path(Hex, OnGameCells, Path), AllAntPaths),
-    % list_to_set(AllAntPaths, AllAntPathsSingle),
-    % write_all(AllAntPathsSingle).
+% depth = 1, always
+minimax(1, Player, Opponent, PlayerMovement, MovementValue, OpponentValue):-
+    commit_movement(Player, Opponent, PlayerMovement, Player_R),
+    playerMovements(Opponent, Player_R, AllOpponentMovements),
+    maplist(evaluate_movements(Opponent, Player_R), AllOpponentMovements, AllOpponentValues),
+    maplist(minimax(0, PlayerMovement, MovementValue), AllOpponentMovements, AllOpponentValues, OpponentValue).
 
-
-% minimax(Player, Opponent, Depth, Move):-
-%     onGameCells(Player, Opponent, OnGameCells),
-%     playerMovements(Player, Opponent, Movements).
+minimax(0, FirstPlayerMovement, FirstPlayerValue, SecondPlayerMovement, SecondPlayerValue, [FirstPlayerValue, SecondPlayerValue, FirstPlayerMovement, SecondPlayerMovement]).
 
 
 join_paths([], []).
@@ -1179,12 +1197,14 @@ playerMovements(Player, Opponent, AllMovements):-
 
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "queen"), get_onGame(Hex, 1),
+    % printall(["searching for the paths from queen", Hex, "onGameCells = ", OnGameCells]),
     findall(Path, queen_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "grasshoper"), get_onGame(Hex, 1),
     findall(Path, grasshoper_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "beetle"), get_onGame(Hex, 1),
+    % printall(["searching for the paths from beetle", Hex, "onGameCells = ", OnGameCells]),
     findall(Path, beetle_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "spider"), get_onGame(Hex, 1),
@@ -1216,6 +1236,7 @@ evaluate_hex_movement(hex(Type, Row, Col, Color, Height, OnGame, Block), [X, Y],
     find_hex(hex(Type, Row, Col, Color, Height, OnGame, Block), Player, 0, Pos),
     new_hex(Type, X, Y, Color, Height, OnGame, Block,HexTemp),
     replace_nth0(Player, Pos, _, HexTemp, Player_R),
+    % nl(), printall(["Evaluating", Row, Col, "to", X, Y, "movement"]),
     evaluate_after_before(Player, Opponent, Player_R, Value).
 
 
@@ -1238,17 +1259,25 @@ evaluate_after_before(PlayerBefore, Opponent, PlayerAfter, Value):-
             Value is ( BeforePlayerCount - AfterPlayerCount) + ( AfterOpponentCount - BeforeOpponentCount)
         )
     ).
+    % onGameCells(PlayerBefore, Opponent, OGB), onGameCells(PlayerAfter, Opponent, OGA),
+    % printall(["Before:",OGB, "\n", "After:", OGA, "\n", "Value =", Value, "\n", "BeforeCount:", BeforePlayerCount, "||", BeforeOpponentCount, "\n", "AfterCount:", AfterPlayerCount, "||", AfterOpponentCount]).
 
 surrounding_queen_count(PlayerColor, OnGameCells, PlayerCount, OpponentCount):-
     find_queen(PlayerColor, OnGameCells, PlayerQueen),
-    neighbours(PlayerQueen, OnGameCells, QueenSurrounders), !,
+    get_row(PlayerQueen, Row), get_col(PlayerQueen, Col),
+    % neighbours(PlayerQueen, OnGameCells, QueenSurrounders), !,
+    maplist(get_coordinates, OnGameCells, OnGameCellsCoor),
+    list_to_set(OnGameCellsCoor, OnGameCellsCoorSet),
+    findall([X1, Y1], onGame_adjacents(X1, Y1, OnGameCellsCoorSet, Row, Col), QueenSurrounders),
     length(QueenSurrounders, PlayerCount),
     
     opponent_color(PlayerColor, OpponentColor),
     (
         (   % enemy queen in game
             find_queen(OpponentColor, OnGameCells, OpponentQueen),
-            neighbours(OpponentQueen, OnGameCells, OpponentSurrounders), !,
+            get_row(OpponentQueen, OppRow), get_col(OpponentQueen, OppCol),
+            % neighbours(OpponentQueen, OnGameCells, OpponentSurrounders), !,
+            findall([X1, Y1], onGame_adjacents(X1, Y1, OnGameCellsCoorSet, OppRow, OppCol), OpponentSurrounders),
             length(OpponentSurrounders, OpponentCount)
         )
         ;
@@ -1258,6 +1287,27 @@ surrounding_queen_count(PlayerColor, OnGameCells, PlayerCount, OpponentCount):-
     
     ).
 
+
+commit_movement(Player, Opponent, Movement, Player_R):-
+    last(Movement, [X, Y]), onGameCells(Player, Opponent, OnGameCells), not(occupied(X, Y, OnGameCells)),
+    nth0(0, Movement, HexPos), find_hex(HexPos, Player, Hex),
+    get_all(Hex, Type, _, _, Color, Height, OnGame, _),
+    new_hex(Type, X, Y, Color, Height, OnGame, 2, HexTemp),
+    find_hex(Hex, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, HexTemp, Player_R).
+
+commit_movement(Player, Opponent, Movement, Player_R):-
+    last(Movement, [X, Y]), onGameCells(Player, Opponent, OnGameCells), occupied(X, Y, OnGameCells),
+    nth0(0, Movement, HexPos), find_hex(HexPos, Player, Hex), find_hex([X, Y], OnGameCells, HexTemp),
+    get_all(Hex, Type, _, _, Color, _, OnGame, _), get_height(HexTemp, DestHeight), succ(DestHeight, DestHeightSucc),
+    new_hex(Type, X, Y, Color, DestHeightSucc, OnGame, 2, NewHex),
+    find_hex(Hex, Player, 0, Pos),
+    replace_nth0(Player, Pos, _, NewHex, Player_R).
+
+commit_movement(Player, Opponent, Movement, _):- 
+    write("\nCOULD NOT COMMIT THE MOVEMENT\n"),
+    onGameCells(Player, Opponent, OnGameCells),
+    printall([OnGameCells, "\n", "Trying to do:", Movement]).
 
 opponent_color(1, 2).
 opponent_color(2, 1).

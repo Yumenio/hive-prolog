@@ -134,3 +134,20 @@ ant 0 2
 ant 0 0
 spider 1 3
 test 0 0
+
+
+init_game().
+queen 0 1
+queen 1 1
+beetle 0 2
+beetle 2 1
+test 0 2
+
+
+init_game().
+queen 0 1
+queen 1 1
+beetle 0 2
+beetle 2 1
+0 2 1 1
+test 0 2
