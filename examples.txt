@@ -119,7 +119,7 @@ beetle 2 2
 init_game().
 queen 0 1
 beetle 0 2
-grasshoper 1 1
+mosquito 1 1
 grasshoper 1 2
 test 1 1
 

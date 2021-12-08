@@ -34,7 +34,8 @@ lower_at([Head|Tail], I, H, Higher):-
     ((H =< Higher1, Higher = H); (Higher = Higher1)))
     ).
 % da el board en forma de array bidimensional 
-board(Cells, NewBoard):- 
+board(OnGameCells, NewBoard):-
+    get_converted_cells(OnGameCells, Cells), 
     nth0(0, Cells, Tupla1), nth0(0, Tupla1, W1), nth0(1, Tupla1, H1), 
     higher_at(Cells, 0, W1, Higher1), higher_at(Cells, 1, H1, Higher2),
     lower_at(Cells, 0, W1, Lower1), lower_at(Cells, 1, H1, Lower2),

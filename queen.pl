@@ -19,4 +19,5 @@ queen_path(Hex, OnGameCells, Path):-
     delete(OnGameCells, Hex, OnGameCellsTemp),
     have_adjacent(AdjX, AdjY, OnGameCellsTemp),
     Path = [[Row, Col], [AdjX, AdjY]].
+
 queen_path(_, _, []).

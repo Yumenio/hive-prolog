@@ -7,11 +7,104 @@
     check_color/2, get_coordinates/2, unblock/2, check_for_highests/3, empty_neighbours/4, 
     is_nb/4, boku_no_adj/4, boku_no_adj/3, valid_paths/4, reachable/3, valid_path_end/2,
     higher/3, replace_nth0/5, reverse_all/2, sum/2, printall/1, write_all/1, new_hex/8,
-    adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, 
-    
+    freedom_to_move/2, queen_on_game/2, valid_state/4, place_hex/8, can_place_hex/6,
+    adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
+    find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
+    find_all_at/3, %neighbours/3, print_hex_board/2,
 
-    there_is_a_path/3, path_of_length_3/1
+    there_is_a_path/3
     ]).
+print_hex_board(Player_1, Player_2):-
+    include(is_on_game(), Player_1, Player1),
+    include(is_on_game(), Player_2, Player2),
+    append(Player1, Player2, OnGameCells),
+    board(OnGameCells, Board),
+    write(Board).
+
+neighbours(_, [], []).
+neighbours(Hex, [Nb|Tail], Nbs):- 
+    (adjacents(Hex, Nb), neighbours(Hex, Tail, Nbs_), 
+    append([Nb], Nbs_, Nbs)); neighbours(Hex, Tail, Nbs).
+
+% devuelve en Hex una celda en juego en las coordenadas X, Y. En caso de no existir devuelve falso.
+find_all_at([X, Y], [Hex|Tail], Hex1):- 
+    get_all(Hex, _, Row1, Col1, _, _, OG1,_),
+    ( (Row1 is X, Col1 is Y, OG1 is 1, Hex1 = Hex);
+    find_all_at([X, Y], Tail, Hex1)).
+
+find_hex(Pos, L, Hex1):-
+    findall(Hex, find_all_at(Pos, L, Hex), Hexs),
+    length(Hexs, Len), Len > 0,
+    nth0(0, Hexs, H),
+    higher(Hexs, H, Hex1), !.
+
+find_hex(_, [], _, -1):- false().
+find_hex(Hex, [H|T], Index, Pos):-
+    get_all(Hex, Type, Row, Col, Color, Height, _, _),
+    get_all(H, Type1, Row1, Col1, Color1, Height1, O, _),
+    (Type1 = Type, Row1 is Row, Col1 is Col, Color1 is Color, 
+    Height1 is Height, O is 1, Pos is Index); 
+    (Index1 is Index +1, find_hex(Hex, T, Index1, Pos)).
+
+free_bug_place(_, _, []):- false().
+free_bug_place(T, C, [hex(Type, _, _, Color, _, OnGame, _)|Tail]):-
+    Color is C, Type = T, OnGame is 0 ; free_bug_place(T, C, Tail).
+
+valid_place(Cell, Cells):- 
+    % onGameSingle(Cells, OnGameCells),
+    include(is_on_game, Cells, OnGameCells),
+    neighbours(Cell, OnGameCells, Nbs), !,
+    length(Nbs,L), L > 0,
+    get_color(Cell, C1), all_same_color(C1, Nbs).
+
+find_free_bug(_, [], _, -1).
+find_free_bug(T, [hex(Type, _, _, _, _, OnGame, _)|Tail], Index, Pos):-
+    (Type = T, OnGame is 0, Pos is Index); 
+    (Index1 is Index + 1, find_free_bug(T, Tail, Index1, Pos)).
+
+% falta por refactorizar
+% Cells es celdas en juegos de ambos players 
+can_place_hex(Turn, Type, X, Y, Color, Cells):-
+    % onGameSingle(Cells,OnGameCells),
+    include(is_on_game(), Cells, OnGameCells),
+    not(occupied(X, Y, OnGameCells)),
+    free_bug_place(Type, Color, Cells), !,
+    %new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+    %valid_place(Hex, Cells),
+    valid_state(Cells, Turn, Color, Type).
+
+place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
+    append(Player1, Player2, Cells),
+    can_place_hex(Turn, Type, X, Y, Color, Cells),
+    new_hex(Type, X, Y, Color, 0, 1, 0, Hex),
+    (Color is 1,
+    find_free_bug(Type, Player1, 0, Pos), 
+    replace_nth0(Player1, Pos, _, Hex, Player_R)
+    ;
+    Color is 2,
+    find_free_bug(Type, Player2, 0, Pos),
+    replace_nth0(Player2, Pos, _, Hex, Player_R)
+    ).
+
+valid_state(Cells, Turn, Color, Type):-
+    queen_on_game(Cells, Color); Turn < 4; (Turn is 4, Type = "queen").
+
+queen_on_game([hex("queen", _, _, Color, _, OnGame, _)|_], PlayerColor):-
+    Color = PlayerColor, OnGame is 1.
+queen_on_game([_|T], PlayerColor):- queen_on_game(T, PlayerColor).
+
+freedom_to_move(Hex, OnGameCells):-
+    length(OnGameCells, L),
+    get_all(Hex, Type, X, Y, Color, Height, _, Block),
+    queen_on_game(OnGameCells, Color),
+    find_hex(Hex, OnGameCells, 0, Pos),
+    new_hex(Type, X, Y, Color, Height, 0, Block, HexTemp),
+    replace_nth0(OnGameCells, Pos, _, HexTemp, OnGameCellsTemp),
+    include(is_on_game(), OnGameCellsTemp, OnGameRemaining),
+    maplist(get_coordinates, OnGameRemaining, OnGameRemainingCoor),
+    adjacents(AdjX, AdjY, X, Y),
+    cc_bfs([AdjX, AdjY], OnGameRemainingCoor, CC),
+    length(CC, CCNodes), CCNodes is L-1.
 
 adjacents(hex(_, Row1, Col1, _, _, _, _), hex(_, Row2, Col2, _, _, _, _)):- 
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
@@ -51,7 +144,21 @@ get_converted_cells(Cells, Converted_Cells):-
     check_for_highests(Cells, Cells, CC),
     maplist(convert_cells, CC, Converted_Cells).
 
-path_of_length_3(X):- length(X, L), L = 4. % 4 because length of a path is |Path|-1
+check_coordinates(X, Y, hex(_, Row, Col, _, _, _, _)):-
+    Row is X, Col is Y.
+check_for_highests([], _, []).
+check_for_highests([hex(_, Row, Col, _, _, _, _)|Tail], L, Result):-
+    include(check_coordinates(Row, Col), L, Filtered),
+    length(Filtered, Len), Len is 1, check_for_highests(Tail, L, R), 
+    append(Filtered, R, Result).
+check_for_highests([hex(_, Row, Col, _, _, _, _)|Tail], L, Result):-
+    include(check_coordinates(Row, Col), L, Filtered),
+    length(Filtered, Len), Len > 1, nth0(0, Filtered, Current_Higher),
+    higher(Filtered, Current_Higher, Higher),
+    check_for_highests(Tail, L, R), 
+    append([Higher], R, Result).
+
+path_of_lengget_conth_3(X):- length(X, L), L = 4. % 4 because length of a path is |Path|-1
 path_greater_than_2(X) :- length(X, L), L > 2.
 
 there_is_a_path(_, _, []):- false().
@@ -90,11 +197,23 @@ boku_no_adj(Hex, [Adj|_], Adj):-
 boku_no_adj(Hex, [_|T], Adj):-
     boku_no_adj(Hex,T, Adj).
 
+cc_bfs([X, Y], Candidates, CC):-
+    cc_path([ [X, Y] ], [], Candidates, CC).
+
+cc_path([], Visited, _, Visited).
+cc_path([Head|Queue], Visited, Candidates, CC):-
+    findall(Adj, boku_no_adj(Head, Candidates, Visited, Adj), Adjs),
+    union(Queue, Adjs, NewQueue),
+    cc_path(NewQueue, [Head|Visited], Candidates, CC).
+
+cc_path([], Visited, _, Visited).
+
 new_hex(Type, Row, Col, Color, Height, OnGame, Blocked, hex(Type, Row, Col, Color, Height, OnGame, Blocked)).
 
 check_color(hex(_, _, _, Color, _, _, _), [hex(_, _, _, Color, _, _, _)|_]).
 
 get_coordinates(hex(_, Row, Col, _, _, _, _), [Row, Col]).
+get_coordinates([Row, Col], [Row, Col]).
 
 get_type(Hex, Type):-       arg(1,Hex, Type).
 get_row(Hex, Row):-         arg(2,Hex, Row).
@@ -143,19 +262,7 @@ init_player2(Color, [Queen, Ant1, Ant2, Ant3, Grasshoper1, Grasshoper2, Grasshop
     new_hex("pillbug",   _,_,Color,0,0,0,PillBug),
     new_hex("ladybug",   _,_,Color,0,0,0,Ladybug).
 
-check_coordinates(X, Y, hex(_, Row, Col, _, _, _, _)):-
-    Row is X, Col is Y.
-check_for_highests([], _, []).
-check_for_highests([hex(_, Row, Col, _, _, _, _)|Tail], L, Result):-
-    include(check_coordinates(Row, Col), L, Filtered),
-    length(Filtered, Len), Len is 1, check_for_highests(Tail, L, R), 
-    append(Filtered, R, Result).
-check_for_highests([hex(_, Row, Col, _, _, _, _)|Tail], L, Result):-
-    include(check_coordinates(Row, Col), L, Filtered),
-    length(Filtered, Len), Len > 1, nth0(0, Filtered, Current_Higher),
-    higher(Filtered, Current_Higher, Higher),
-    check_for_highests(Tail, L, R), 
-    append([Higher], R, Result).
+
 
 get_all(Hex, T, X, Y, C, H, O, B):- 
     get_type(Hex,T), get_row(Hex,X),
