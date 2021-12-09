@@ -79,6 +79,10 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
   NewPlayer2 = Player2
   );
 
+  (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
+  write("Player1:\n"), write_all(OGPlayer1), write("Player2:\n"), write_all(OGPlayer2),
+  turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2));
+
   % caso poner ficha
   (length(Input,L1), L1 is 3,
   parse_input_place(Raw_input, Type, Row, Col),
@@ -122,6 +126,10 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
   commit_movement(Player2, Player1, MyMove, NewPlayer2),
   NewPlayer1 = Player1
   );
+
+  (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
+  write("Player2:\n"), write_all(OGPlayer2), write("Player1:\n"), write_all(OGPlayer1),
+  turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1));
 
   % caso poner ficha
   (length(Input,L1), L1 is 3,

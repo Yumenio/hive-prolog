@@ -70,14 +70,14 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-    %new_hex(Type, X, Y, Color, _, 0, 0, Hex),
-    %valid_place(Hex, Cells),
+    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+    valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
     append(Player1, Player2, Cells),
     can_place_hex(Turn, Type, X, Y, Color, Cells),
-    new_hex(Type, X, Y, Color, 0, 1, 0, Hex),
+    new_hex(Type, X, Y, Color, 0, 1, 2, Hex),
     (Color is 1,
     find_free_bug(Type, Player1, 0, Pos), 
     replace_nth0(Player1, Pos, _, Hex, Player_R)
@@ -97,6 +97,7 @@ queen_on_game([_|T], PlayerColor):- queen_on_game(T, PlayerColor).
 freedom_to_move(Hex, OnGameCells):-
     not(buried(Hex, OnGameCells)),
     get_all(Hex, Type, X, Y, Color, Height, _, Block),
+    Block = 0,
     queen_on_game(OnGameCells, Color),
     find_hex(Hex, OnGameCells, 0, Pos),
     new_hex(Type, X, Y, Color, Height, 0, Block, HexTemp),
@@ -229,7 +230,7 @@ get_height(Hex, Height):-   arg(5,Hex, Height).
 get_onGame(Hex, OnGame):-   arg(6,Hex, OnGame).
 get_blocked(Hex, Blocked):- arg(7,Hex, Blocked).
 
-reduce_block(hex(Type, Row, Col, Color, Height, OnGame, X), hex(Type, Row, Col, Color, Height, OnGame, XB)):- X > 0, XB is X+1.
+reduce_block(hex(Type, Row, Col, Color, Height, OnGame, X), hex(Type, Row, Col, Color, Height, OnGame, XB)):- X > 0, XB is X-1.
 reduce_block(hex(Type, Row, Col, Color, Height, OnGame,0), hex(Type, Row, Col, Color, Height, OnGame,0)).
 
 unblock(BlockedHex, UnblockedHex):- maplist(reduce_block(), BlockedHex, UnblockedHex).
