@@ -11,7 +11,7 @@
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3, queen_count/3,
-    can_move/4, 
+    can_move/4, game_states/2,
 
     there_is_a_path/3,
     find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7
@@ -423,11 +423,28 @@ queen_count([Hex|Tail], OG, Count):-
 
 queen_count_aux(hex("queen", Row, Col, _, _, _, _), OG, Count):-
     findall([X, Y], occupied_adjacent(X, Y, OG, Row, Col), Bag),
-    write_all([Bag]),
     length(Bag, Count).
 
 queen_count_aux(_, _, 0).
 
+game_states(Player1, Player2):-
+    onGameCells(Player1, Player2, OG),
+    queen_count(Player1, OG, C1),
+    queen_count(Player2, OG, C2),
+    C1 is 6, C2 is 6, write("Draw\n"), abort().
+
+game_states(Player1, Player2):-
+    onGameCells(Player1, Player2, OG),
+    queen_count(Player1, OG, C1),
+    queen_count(Player2, OG, C2),
+    not(C1 is 6), C2 is 6, write("Player1 wins\n"), abort().
+
+game_states(Player1, Player2):-
+    onGameCells(Player1, Player2, OG),
+    queen_count(Player1, OG, C1),
+    queen_count(Player2, OG, C2),
+    C1 is 6, not(C2 is 6), write("Player2 wins\n"), abort().
+game_states(_, _).
 
 occupied_adjacent(Row1, Col1, OG, Row2, Col2):- 
     ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
