@@ -425,6 +425,14 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     test([Row, Col], Player1, Player2),
     NewPlayer1 = Player1, NewPlayer2 = Player2);
     
+    ( % caso ia
+    Raw_input = "ia",
+    minimax(2, Player1, Player2, BestMove), BestMove = [MyValue, OppValue, MyMove, _],
+    printall(["Best possible movel, with a value of", [MyValue, OppValue], "is", MyMove]),
+    commit_movement(Player1, Player2, MyMove, NewPlayer1),
+    NewPlayer2 = Player2
+    );
+
     % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
@@ -457,6 +465,8 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
     ).
 
 turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
+    % minimax(2, Player2, Player1, _),
+
     read_line_to_string(user_input, Raw_input),
     split_string(Raw_input,"\s","\s",Input),
     ( % caso prueba
@@ -466,6 +476,14 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
     test([Row, Col], Player2, Player1),
     NewPlayer1 = Player1, NewPlayer2 = Player2);
     
+    ( % caso ia
+    Raw_input = "ia",
+    minimax(2, Player2, Player1, BestMove), BestMove = [MyValue, OppValue, MyMove, _],
+    printall(["Best possible movel, with a value of", [MyValue, OppValue], "is", MyMove]),
+    commit_movement(Player2, Player1, MyMove, NewPlayer2),
+    NewPlayer1 = Player1
+    );
+
     % caso poner ficha
     (length(Input,L1), L1 is 3,
     parse_input_place(Raw_input,Type,Row,Col),
@@ -644,9 +662,7 @@ grasshoper_move(Hex1, X, Y, Player, Opponent, Player_R):-
     new_hex(T, X, Y, C, 0, 1, 2, Hex2),
 
     find_grasshoper_path(Hex1, OnGameCells, Path),
-    valid_paths(X, Y, Path, ValidPath),
-    length(ValidPath, LVP),
-    LVP > 0,
+    true_path(X, Y, Path),
     find_hex(Hex1, Player, 0, Pos),
     replace_nth0(Player, Pos, _, Hex2, Player_R).
 
@@ -988,49 +1004,6 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
     (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
     neighbours(X, Y, Tail, Visited, Nbs).
 
-boku_no_neighbours(Visited, [X,Y], [M,N]):-
-    write("Visited:\n"),
-    printall(Visited),
-    printall(["Analizing if", M, N, "is adjacent to", X, Y]),
-    not(member([M, N], Visited)),
-    write("Ok, it wasn't visited\n"),
-    adjacents(X, Y, M, N), write("Adjacent found, appending\n").
-
-ineighbours([X,Y], Candidates, Visited, Nbs):-
-    include(boku_no_neighbours(Visited, [X,Y]), Candidates, Nbs).
-
-% is_nb(X, Y, Visited, Nb):-
-%     write_all(["is_nb",Visited, Nb]),
-%     nth0( 0, Nb, X1),
-%     nth0( 1, Nb, Y1),
-%     not(member([X1,Y1], Visited)),
-%     adjacents(X, Y, X1, Y1).
-% neighbours(X, Y, V, L, Nbs):-
-%     write_all([X, Y, L]),
-%     include(is_nb(X, Y, V), L, Nbs),
-%     write_all([Nbs]).
-%% dfs starting from a root 
-dfs_path(X, Y, Deep, Cells, _, Result):-
-    dfs_path([[X, Y]], Deep, Cells, [], Result1),
-    list_to_set(Result1, Result).
-%% Done, all visited
-dfs_path(_, 0, _, Result, Result).
-%% Skip elements that are already visited
-dfs_path([Hex|Tail], Deep, Cells, Visited, Result):-
-    member(Hex, Visited),
-    dfs_path(Tail, Deep, Cells, Visited, Result).
-%% add all adjacents
-dfs_path([H|T], Deep, L, Visited, T1):-
-    not(member(H, Visited)),
-    nth0( 0, H, X1),
-    nth0( 1, H, Y1),
-    append(Visited, T, V1),
-    % neighbours(X1, Y1, L, V1, Nbs),
-    ineighbours([X1, Y1], L, V1, Nbs),
-    % append(Nbs, T, ToVisit),
-    predecessor(Deep, Deep1),
-    dfs_path(Nbs, Deep1, L, [H|Visited], T1).
-
 true_path(X, Y,  Head):-
     length(Head, L), predecessor(L, P), nth0(P, Head, H), 
     nth0( 0, H, X1), nth0( 1, H, Y1),
@@ -1058,32 +1031,29 @@ single_path(Stack, [X, Y], Dest, Candidates, OnGameCells, Sol):-
     single_path([[X, Y]|Stack], Adj, Dest, Candidates, OnGameCells, Sol).
 
 
-capped_dfs([X, Y], Dest, Candidates, Cap, OnGameCells, Solution):-
-    capped_path([], [X, Y], Dest, Candidates, Cap, OnGameCells, RevSolution),
+capped_dfs([X, Y], Dest, Candidates, Cap, Solution):-
+    capped_path([], [X, Y], Dest, Candidates, Cap, RevSolution),
     reverse(RevSolution, Solution).
     
-capped_path(Stack, [X, Y], [X, Y], _, Cap, _, [[X, Y]|Stack]):- length(Stack, StackLength), StackLength is Cap.
+capped_path(Stack, [X, Y], [X, Y], _, Cap, [[X, Y]|Stack]):- length(Stack, StackLength), StackLength is Cap.
 
-capped_path(Stack, [X, Y], Dest, Candidates, Cap, OnGameCells, Path):-
+capped_path(Stack, [X, Y], Dest, Candidates, Cap, Path):-
     length(Stack, PathLength), PathLength < Cap,
-    boku_no_adj([X, Y], Candidates, Adj),
-    reachable([X, Y], Adj, OnGameCells),
-    capped_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, OnGameCells, Path).
+    boku_no_adj([X, Y], Candidates, Stack, Adj),
+    capped_path([[X, Y]|Stack], Adj, Dest, Candidates, Cap, Path).
 
 
 ladybug_dfs([X, Y], Length, Candidates, Solution):-
-    printall(["Candidates are", Candidates]),
+    % printall(["Candidates are", Candidates]),
     get_ladybug_path([], [X, Y], Length, Candidates, RevSolution),
     reverse(RevSolution, Solution).
 
 get_ladybug_path(Stack, [X, Y], Length, _, [[X, Y]|Stack]):-
-    length(Stack, StackLength), printall(["Is", Stack, "of Length =", Length]), StackLength is Length, printall(["Found", [[X,Y]|Stack]]).
+    length(Stack, StackLength), StackLength is Length.
 
 get_ladybug_path(Stack, [X, Y], Length, Candidates, Path):-
     length(Stack, StackLength), StackLength < Length,
-    printall(["Current node is", X, Y, "path = ", Stack]),
     boku_no_adj([X, Y], Candidates, Stack, Adj),
-    printall(["Calling recursively with", Adj]), write("\n"),
     get_ladybug_path([[X, Y]|Stack], Adj, Length, Candidates, Path).
 
 
@@ -1159,6 +1129,8 @@ buried(hex(_, Row, Col, _, H1, _, _), [hex(_, Row, Col, _, H2, _, _)|_]):- H2 > 
 buried(Hex, [_|T]):- buried(Hex, T).
 
 test([_, _], Player, Opponent):- minimax(2, Player, Opponent, _).
+
+ia_move(Player, Opponent, Move):- minimax(2, Player, Opponent, Move).
 % test([_, _], Player, Opponent):-
 %     playerMovements(Player, Opponent, AllMoves),
 %     write_all(AllMoves).
@@ -1167,23 +1139,42 @@ test([_, _], Player, Opponent):- minimax(2, Player, Opponent, _).
     % printall(["Evaluation of movements:", AllValues]).
 
     
-    % depth = 2, always
+% depth = 2, always
 minimax(2, Player, Opponent, BestMove):-
     playerMovements(Player, Opponent, AllMovements),
-    write_all(AllMovements),
+    % write_all(AllMovements),
     maplist(evaluate_movements(Player, Opponent), AllMovements, AllValues),
     maplist(minimax(1, Player, Opponent), AllMovements, AllValues, R2Values),
-    write_all(R2Values).
+    % printall(["All moves:"]), write_all(R2Values),
+    maplist(find_best_opponent_move, R2Values, BestOpponentMovePerPiece),
+    % printall(["All opponent moves:"]), write_all(BestOpponentMovePerPiece),
+    maplist(get_pair_value, BestOpponentMovePerPiece, PlayerMoveValues),
+    max_member(MaxValue, PlayerMoveValues), nth0(Index, PlayerMoveValues, MaxValue),
+    nth0(Index, BestOpponentMovePerPiece, BestMove).
 
 % depth = 1, always
 minimax(1, Player, Opponent, PlayerMovement, MovementValue, OpponentValue):-
     commit_movement(Player, Opponent, PlayerMovement, Player_R),
     playerMovements(Opponent, Player_R, AllOpponentMovements),
+    % delete(AllOpponentMovements, [], AllOpponentMovementsFix),
     maplist(evaluate_movements(Opponent, Player_R), AllOpponentMovements, AllOpponentValues),
     maplist(minimax(0, PlayerMovement, MovementValue), AllOpponentMovements, AllOpponentValues, OpponentValue).
 
 minimax(0, FirstPlayerMovement, FirstPlayerValue, SecondPlayerMovement, SecondPlayerValue, [FirstPlayerValue, SecondPlayerValue, FirstPlayerMovement, SecondPlayerMovement]).
 
+% List has the form: [ [Player1Value, Player2Value, Player1Move, Player2Move], and repeat...]
+find_best_move(List, Best):-
+    maplist(get_pair_value, List, ValueList),
+    max_member(MaxValue, ValueList), nth0(Index, ValueList, MaxValue),
+    nth0(Index, List, Best).
+
+find_best_opponent_move(List, Best):-
+    maplist(get_opponent_value, List, ValueList),
+    max_member(MaxValue, ValueList), nth0(Index, ValueList, MaxValue),
+    nth0(Index, List, Best).
+
+get_pair_value([P1Move, P2Move|_], Value):- Value is P1Move - P2Move.
+get_opponent_value([P1Move, P2Move|_], Value):- Value is P2Move - P1Move.
 
 join_paths([], []).
 join_paths([Head|Tail], Result):-
@@ -1193,18 +1184,45 @@ join_paths([Head|Tail], Result):-
 playerMovements(Player, Opponent, AllMovements):-
     onGameCells(Player, Opponent, OnGameCells),
     maplist(get_hex_moves(OnGameCells), Player, Result),
-    join_paths(Result, AllMovements).
+    join_paths(Result, AllMovementsTemp), list_to_set(AllMovementsTemp, MoveSet),
+    % printall(["Moveset", MoveSet]),
+    maplist(label_move, MoveSet, LabeledMoveSet), delete(LabeledMoveSet, ["move"], LabeledCleanMoveSet),
+    get_hex_placement(Player, Opponent, PlayerPlacement),
+    append([PlayerPlacement], LabeledCleanMoveSet, AllMovements).
+
+label_move(Move, ["move"|Move]).
+
+get_hex_placement(Player, Opponent, PlayerPlacement):-
+    include(offGame_hex, Player, OffGamePlayerCells),
+    random_member(RandomHex, OffGamePlayerCells),
+    get_valid_placements(Player, Opponent, ValidPlacements),
+    random_member(RandomPlacement, ValidPlacements),
+    get_type(RandomHex, Type),
+    PlayerPlacement = [ "place", Type, RandomPlacement].
+    % printall(["Randomly selected hex and placements:", PlayerPlacement]).
+
+get_valid_placements(Player, Opponent, ValidPlacements):-
+    onGameCells(Player, Opponent, OnGameCells),
+    include(is_on_game, Player, OnGamePlayerCells),
+    include(is_on_game, Opponent, OnGameOpponentCells),
+    vecinos_void(OnGamePlayerCells, [], OnGameCells, FreeCellsPlayer),
+    vecinos_void(OnGameOpponentCells, [], OnGameCells, FreeCellsOpponent),
+    include(valid_placement_cell(FreeCellsOpponent), FreeCellsPlayer, ValidPlacements).
+
+valid_placement_cell(OpponentCells, PlayerCell):- not(member(PlayerCell, OpponentCells)).
+
+
+
+offGame_hex(hex(_, _, _, _, _, 0, _)).
 
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "queen"), get_onGame(Hex, 1),
-    % printall(["searching for the paths from queen", Hex, "onGameCells = ", OnGameCells]),
     findall(Path, queen_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "grasshoper"), get_onGame(Hex, 1),
     findall(Path, grasshoper_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "beetle"), get_onGame(Hex, 1),
-    % printall(["searching for the paths from beetle", Hex, "onGameCells = ", OnGameCells]),
     findall(Path, beetle_path(Hex, OnGameCells, Path), HexMovements).
 get_hex_moves(OnGameCells, Hex, HexMovements):-
     get_type(Hex, "spider"), get_onGame(Hex, 1),
@@ -1226,11 +1244,23 @@ get_hex_moves(_, _, []).
 
 
 evaluate_movements(Player, Opponent, Movement, Value):- % to use with maplist() over the movement list
-    nth0(0, Movement, HexPos),
-    % printall(["Evaluating", Movement]),
+    nth0(0, Movement, "move"),
+    nth0(1, Movement, HexPos),
     last(Movement, DestPos),
     find_hex(HexPos, Player, Hex),
     evaluate_hex_movement(Hex, DestPos, Player, Opponent, Value).
+
+evaluate_movements(Player, Opponent, ["place", Type, Dest], Value):-
+    evaluate_hex_placement(Type, Dest, Player, Opponent, Value).
+
+evaluate_hex_placement(Type, [X, Y], Player, Opponent, Value):-
+    find_free_bug(Type, Player, 0, Index),
+    nth0(Index, Player, hex(Type, _, _, Color, _, _, _)),
+    new_hex(Type, X, Y, Color, 0, 1, 2, NewHex),
+    replace_nth0(Player, Index, _, NewHex, Player_R),
+    
+    evaluate_after_before_placement(Player, Opponent, Player_R, Value).
+
 
 evaluate_hex_movement(hex(Type, Row, Col, Color, Height, OnGame, Block), [X, Y], Player, Opponent, Value):-
     find_hex(hex(Type, Row, Col, Color, Height, OnGame, Block), Player, 0, Pos),
@@ -1239,6 +1269,25 @@ evaluate_hex_movement(hex(Type, Row, Col, Color, Height, OnGame, Block), [X, Y],
     % nl(), printall(["Evaluating", Row, Col, "to", X, Y, "movement"]),
     evaluate_after_before(Player, Opponent, Player_R, Value).
 
+evaluate_after_before_placement(PlayerBefore, Opponent, PlayerAfter, Value):-
+    nth0(0,PlayerBefore, hex(_, _, _, PlayerColor, _, _, _)),
+    onGameCells(PlayerBefore, Opponent, OnGameCellsBefore),
+    onGameCells(PlayerAfter, Opponent, OnGameCellsAfter),
+    surrounding_queen_count(PlayerColor, OnGameCellsBefore, BeforePlayerCount, BeforeOpponentCount),
+    surrounding_queen_count(PlayerColor, OnGameCellsAfter, AfterPlayerCount, AfterOpponentCount),
+    (
+        (
+            AfterPlayerCount = 6, Value = -1000
+        )
+        ;
+        (
+            AfterOpponentCount = 6, Value = 1000
+        )
+        ;
+        (
+            Value is 1 + ( BeforePlayerCount - AfterPlayerCount) + ( AfterOpponentCount - BeforeOpponentCount)
+        )
+    ).
 
 evaluate_after_before(PlayerBefore, Opponent, PlayerAfter, Value):-
     nth0(0,PlayerBefore, hex(_, _, _, PlayerColor, _, _, _)),
@@ -1288,23 +1337,29 @@ surrounding_queen_count(PlayerColor, OnGameCells, PlayerCount, OpponentCount):-
     ).
 
 
-commit_movement(Player, Opponent, Movement, Player_R):-
+commit_movement(Player, Opponent, ["move"|Movement], Player_R):-
     last(Movement, [X, Y]), onGameCells(Player, Opponent, OnGameCells), not(occupied(X, Y, OnGameCells)),
     nth0(0, Movement, HexPos), find_hex(HexPos, Player, Hex),
-    get_all(Hex, Type, _, _, Color, Height, OnGame, _),
-    new_hex(Type, X, Y, Color, Height, OnGame, 2, HexTemp),
+    get_all(Hex, Type, _, _, Color, _, _, _),
+    new_hex(Type, X, Y, Color, 1, 1, 2, HexTemp),
     find_hex(Hex, Player, 0, Pos),
     replace_nth0(Player, Pos, _, HexTemp, Player_R).
 
-commit_movement(Player, Opponent, Movement, Player_R):-
+commit_movement(Player, Opponent, ["move"|Movement], Player_R):-
     last(Movement, [X, Y]), onGameCells(Player, Opponent, OnGameCells), occupied(X, Y, OnGameCells),
     nth0(0, Movement, HexPos), find_hex(HexPos, Player, Hex), find_hex([X, Y], OnGameCells, HexTemp),
-    get_all(Hex, Type, _, _, Color, _, OnGame, _), get_height(HexTemp, DestHeight), succ(DestHeight, DestHeightSucc),
-    new_hex(Type, X, Y, Color, DestHeightSucc, OnGame, 2, NewHex),
+    get_all(Hex, Type, _, _, Color, _, _, _), get_height(HexTemp, DestHeight), succ(DestHeight, DestHeightSucc),
+    new_hex(Type, X, Y, Color, DestHeightSucc, 1, 2, NewHex),
     find_hex(Hex, Player, 0, Pos),
     replace_nth0(Player, Pos, _, NewHex, Player_R).
 
-commit_movement(Player, Opponent, Movement, _):- 
+commit_movement(Player, _, ["place", Type, [X, Y]], Player_R):-
+    find_free_bug(Type, Player, 0, Index),
+    nth0(Index, Player, hex(Type, _, _, Color, _, _, _)),
+    new_hex(Type, X, Y, Color, 0, 1, 2, NewHex),
+    replace_nth0(Player, Index, _, NewHex, Player_R).
+
+commit_movement(Player, Opponent, Movement, _):-
     write("\nCOULD NOT COMMIT THE MOVEMENT\n"),
     onGameCells(Player, Opponent, OnGameCells),
     printall([OnGameCells, "\n", "Trying to do:", Movement]).

@@ -37,9 +37,10 @@ ant 2 2
 init_game().
 queen 1 1
 queen 1 2
-grasshoper 1 0
+grasshoper 2 1
 ant 2 2
-1 0 1 3
+2 1 2 3
+test 1 0
 
 
 init_game().
@@ -57,7 +58,8 @@ queen 1 1
 queen 2 1
 ladybug 1 0
 ladybug 2 2
-1 0 2 3
+1 0 3 1
+test 1 0
 
 
 init_game().
@@ -148,6 +150,27 @@ init_game().
 queen 0 1
 queen 1 1
 beetle 0 2
-beetle 2 1
+queen 2 1
 0 2 1 1
 test 0 2
+
+
+init_game().
+queen 1 1
+queen 1 2
+ant 1 0
+beetle 0 0
+ant 0 1
+0 0 0 1
+
+
+
+init_game().
+queen 0 1
+beetle 0 2
+mosquito 1 1
+grasshoper 1 2
+test 1 1
+ant 1 3
+1 1 -1 3
+1 3 2 2
