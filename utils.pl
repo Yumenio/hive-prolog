@@ -88,8 +88,8 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
     include(is_on_game(), Cells, OnGameCells),
     not(occupied(X, Y, OnGameCells)),
     free_bug_place(Type, Color, Cells), !,
-    %new_hex(Type, X, Y, Color, _, 0, 0, Hex),
-    %valid_place(Hex, Cells),
+    new_hex(Type, X, Y, Color, _, 0, 0, Hex),
+    valid_place(Hex, Cells),
     valid_state(Cells, Turn, Color, Type).
 
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
@@ -115,6 +115,7 @@ queen_on_game([_|T], PlayerColor):- queen_on_game(T, PlayerColor).
 freedom_to_move(Hex, OnGameCells):-
     not(buried(Hex, OnGameCells)),
     get_all(Hex, Type, X, Y, Color, Height, _, Block),
+    Block = 0,
     queen_on_game(OnGameCells, Color),
     find_hex(Hex, OnGameCells, 0, Pos),
     new_hex(Type, X, Y, Color, Height, 0, Block, HexTemp),

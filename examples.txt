@@ -209,3 +209,18 @@ spider -1 0
 -1 1 -1 2
 ia
 
+
+init_game().
+queen 1 1
+queen 1 2
+ant 0 1
+1 2 0 2
+ia
+
+
+init_game().
+queen 1 1
+queen 1 2
+ant 0 1
+1 2 0 2
+0 1 -1 3
