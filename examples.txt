@@ -125,6 +125,12 @@ mosquito 1 1
 grasshoper 1 2
 test 1 1
 
+init_game().
+queen 1 1
+queen 1 2
+ant 1 0
+beetle 0 0
+
 
 init_game().
 ant 0 1

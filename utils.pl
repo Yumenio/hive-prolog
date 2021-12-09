@@ -10,10 +10,28 @@
     freedom_to_move/2, queen_on_game/2, valid_state/4, place_hex/8, can_place_hex/6,
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
-    find_all_at/3, neighbours/3, print_hex_board/2, true_path/3,
+    find_all_at/3, neighbours/3, print_hex_board/2, true_path/3, queen_count/3,
+    can_move/4, 
 
     there_is_a_path/3
     ]).
+
+can_move(Hex1, X1, Y1, OnGameCells):-
+    length(OnGameCells, L),
+    get_all(Hex1, T, X, Y, C, _, _, B), B is 0,
+    queen_on_game(OnGameCells, C),
+    neighbours(Hex1, OnGameCells, Nbs), !,
+    nth0(0, Nbs, Nb),
+    get_all(Nb, _, Nb_x, Nb_y, _, _, _, _),
+    new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
+    find_hex(Hex1, OnGameCells, 0, Pos),
+    replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
+    include(is_on_game(), OG, OGC),
+    maplist(get_coordinates, OGC, OGCoor),
+    cc_bfs( [Nb_x, Nb_y] , OGCoor, CC),
+    length(CC, CCNodes), CCNodes is L-1,
+    have_adjacent(X1, Y1, OnGameCells). 
+
 print_hex_board(Player_1, Player_2):-
     include(is_on_game(), Player_1, Player1),
     include(is_on_game(), Player_2, Player2),
@@ -76,9 +94,9 @@ can_place_hex(Turn, Type, X, Y, Color, Cells):-
 place_hex(Turn, Type, X, Y, Color, Player1, Player2, Player_R):-
     append(Player1, Player2, Cells),
     can_place_hex(Turn, Type, X, Y, Color, Cells),
-    new_hex(Type, X, Y, Color, 0, 1, 0, Hex),
+    new_hex(Type, X, Y, Color, 0, 1, 2, Hex),
     (Color is 1,
-    find_free_bug(Type, Player1, 0, Pos), 
+    find_free_bug(Type, Player1, 0, Pos), %d!,
     replace_nth0(Player1, Pos, _, Hex, Player_R)
     ;
     Color is 2,
@@ -396,8 +414,24 @@ neighbours(X, Y, [Nb|Tail], Visited, Nbs):-
     (is_nb(X, Y, Nb, Visited), neighbours(X, Y, Tail, Visited, Nbs1), append([Nb], Nbs1, Nbs)); 
     neighbours(X, Y, Tail, Visited, Nbs).
 
+queen_count([], _, 0).
+queen_count([Hex|Tail], OG, Count):- 
+    queen_count_aux(Hex, OG, C1), 
+    queen_count(Tail, OG, C2), 
+    Count is C1 + C2.
+
+queen_count_aux(hex("queen", Row, Col, _, _, _, _), OG, Count):-
+    findall([X, Y], occupied_adjacent(X, Y, OG, Row, Col), Bag),
+    write_all([Bag]),
+    length(Bag, Count).
+
+queen_count_aux(_, _, 0).
 
 
+occupied_adjacent(Row1, Col1, OG, Row2, Col2):- 
+    ((Col1 is Col2, (Row1 is Row2-1 ; Row1 is Row2+1) );
+    (Col1 is Col2+1, (Row1 is Row2 ; Row1 is Row2-1) );
+    (Col1 is Col2-1, ( Row1 is Row2 ; Row1 is Row2+1) )), occupied(Row1, Col1, OG).
 
 
 
