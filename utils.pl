@@ -13,7 +13,8 @@
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3, queen_count/3,
     can_move/4, 
 
-    there_is_a_path/3
+    there_is_a_path/3,
+    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7
     ]).
 
 can_move(Hex1, X1, Y1, OnGameCells):-
@@ -246,7 +247,7 @@ get_height(Hex, Height):-   arg(5,Hex, Height).
 get_onGame(Hex, OnGame):-   arg(6,Hex, OnGame).
 get_blocked(Hex, Blocked):- arg(7,Hex, Blocked).
 
-reduce_block(hex(Type, Row, Col, Color, Height, OnGame, X), hex(Type, Row, Col, Color, Height, OnGame, XB)):- X > 0, XB is X+1.
+reduce_block(hex(Type, Row, Col, Color, Height, OnGame, X), hex(Type, Row, Col, Color, Height, OnGame, XB)):- X > 0, XB is X-1.
 reduce_block(hex(Type, Row, Col, Color, Height, OnGame,0), hex(Type, Row, Col, Color, Height, OnGame,0)).
 
 unblock(BlockedHex, UnblockedHex):- maplist(reduce_block(), BlockedHex, UnblockedHex).
@@ -446,3 +447,45 @@ printall([X|T]):-
     write(X),
     write(" "),
     printall(T).
+
+
+find_queen(Color, [hex("queen", Row, Col, Color, Height, OnGame, Block)|_], hex("queen", Row, Col, Color, Height, OnGame, Block)).
+find_queen(Color, [_|Tail], Hex):- find_queen(Color, Tail, Hex).
+
+
+onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
+    adjacents(X, Y, AdjX, AdjY),
+    member([X, Y], OnGameCellsCoordinates).
+
+
+can_move(Hex1, X1, Y1, OnGameCells):-
+    length(OnGameCells, L),
+    get_all(Hex1, T, X, Y, C, _, _, B), B is 0,
+    queen_on_game(OnGameCells, C),
+    neighbours(Hex1, OnGameCells, Nbs), !,
+    nth0(0, Nbs, Nb),
+    get_all(Nb, _, Nb_x, Nb_y, _, _, _, _),
+    new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
+    find_hex(Hex1, OnGameCells, 0, Pos),
+    replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
+    % onGameSingle(OG, OGC),
+    include(is_on_game(), OG, OGC),
+    maplist(get_coordinates, OGC, OGCoor),
+    cc_bfs( [Nb_x, Nb_y] , OGCoor, CC),
+    length(CC, CCNodes), CCNodes is L-1,
+    have_adjacent(X1, Y1, OnGameCells). 
+
+
+move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
+    onGameCells(Player, Opponent, OnGameCells),
+    find_hex([X, Y], OnGameCells, Hex),
+    check_color(Hex, Player),
+    get_type(Hex, T),
+    ((T = "queen",  queen_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ant",       ant_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "grasshoper", grasshoper_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "beetle", beetle_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "ladybug", ladybug_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "pillbug", pillbug_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "mosquito", mosquito_move(Hex, X1, Y1, Player, Opponent, Player_R));
+    (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).

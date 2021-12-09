@@ -52,7 +52,7 @@ ladybug_dfs([X, Y], Length, Candidates, Solution):-
     reverse(RevSolution, Solution).
 
 get_ladybug_path(Stack, [X, Y], Length, _, [[X, Y]|Stack]):-
-    length(Stack, StackLength), StackLength is Length, printall(["Found", [[X,Y]|Stack]]).
+    length(Stack, StackLength), StackLength is Length. %, printall(["Found", [[X,Y]|Stack]]).
 
 get_ladybug_path(Stack, [X, Y], Length, Candidates, Path):-
     length(Stack, StackLength), StackLength < Length,

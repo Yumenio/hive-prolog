@@ -30,10 +30,6 @@ pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
     not(two_common_of_height_two(CommonAdjs, OnGameCells, [])).
 
 
-onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
-    adjacents(X, Y, AdjX, AdjY),
-    member([X, Y], OnGameCellsCoordinates).
-
 two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
     find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
     Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
