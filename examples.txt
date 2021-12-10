@@ -252,3 +252,4 @@ queen 1 1
 spider 1 2
 
 
+init_game("ia_vs_ia").
