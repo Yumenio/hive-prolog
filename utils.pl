@@ -422,7 +422,7 @@ queen_count([Hex|Tail], OG, Count):-
     queen_count(Tail, OG, C2), 
     Count is C1 + C2.
 
-queen_count_aux(hex("queen", Row, Col, _, _, _, _), OG, Count):-
+queen_count_aux(hex("queen", Row, Col, _, _, 1, _), OG, Count):-
     findall([X, Y], occupied_adjacent(X, Y, OG, Row, Col), Bag),
     length(Bag, Count).
 
@@ -474,24 +474,6 @@ find_queen(Color, [_|Tail], Hex):- find_queen(Color, Tail, Hex).
 onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
     adjacents(X, Y, AdjX, AdjY),
     member([X, Y], OnGameCellsCoordinates).
-
-
-can_move(Hex1, X1, Y1, OnGameCells):-
-    length(OnGameCells, L),
-    get_all(Hex1, T, X, Y, C, _, _, B), B is 0,
-    queen_on_game(OnGameCells, C),
-    neighbours(Hex1, OnGameCells, Nbs), !,
-    nth0(0, Nbs, Nb),
-    get_all(Nb, _, Nb_x, Nb_y, _, _, _, _),
-    new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
-    find_hex(Hex1, OnGameCells, 0, Pos),
-    replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
-    % onGameSingle(OG, OGC),
-    include(is_on_game(), OG, OGC),
-    maplist(get_coordinates, OGC, OGCoor),
-    cc_bfs( [Nb_x, Nb_y] , OGCoor, CC),
-    length(CC, CCNodes), CCNodes is L-1,
-    have_adjacent(X1, Y1, OnGameCells). 
 
 
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
