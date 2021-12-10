@@ -9,7 +9,7 @@
 :- use_module(grasshoper).
 :- use_module(mosquito).
 :- use_module(dfs).
-:- use_module(ia).
+:- use_module(ia). 
 
 :-write("\nWelcome to BokuNoHive!\n").
 :-write("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n\n").

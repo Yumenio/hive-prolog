@@ -11,7 +11,7 @@
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3, queen_count/3,
-    can_move/4, game_states/2, add_empty_type/2,
+    can_move/4, game_states/2, add_empty_type/2, mdl/3,
 
     there_is_a_path/3,
     find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7, buried/2, two_common_of_height_two/3
@@ -81,7 +81,6 @@ find_free_bug(T, [hex(Type, _, _, _, _, OnGame, _)|Tail], Index, Pos):-
     (Type = T, OnGame is 0, Pos is Index); 
     (Index1 is Index + 1, find_free_bug(T, Tail, Index1, Pos)).
 
-% falta por refactorizar
 % Cells es celdas en juegos de ambos players 
 can_place_hex(Turn, Type, X, Y, Color, Cells):-
     % onGameSingle(Cells,OnGameCells),
@@ -469,6 +468,8 @@ printall([X|T]):-
     write(" "),
     printall(T).
 
+mdl(X, Y, Z):-
+    W is X // Y, W1 is W*Y, Z is X - W1.
 
 find_queen(Color, [hex("queen", Row, Col, Color, Height, OnGame, Block)|_], hex("queen", Row, Col, Color, Height, OnGame, Block)).
 find_queen(Color, [_|Tail], Hex):- find_queen(Color, Tail, Hex).

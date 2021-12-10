@@ -92,17 +92,20 @@ center([], _, _, "\n").
 center([Head|Tail], LX, LY, Row):- 
     not(Head is 0), LX >= 0, LY >= 0,
     successor(LY, LY1), center(Tail, LX, LY1, Result),
-    concat_list(["|", LX, "  ", LY, "|", Result], Row).
+    mdl(LX, 10,  LX_), mdl(LY, 10,  LY_),
+    concat_list(["|", LX_, "  ", LY_, "|", Result], Row).
 %
 center([Head|Tail], LX, LY, Row):- 
     not(Head is 0), LX < 0, LY < 0,
     successor(LY, LY1), center(Tail, LX, LY1, Result),
-    concat_list(["|", LX, LY, "|", Result], Row).
+    mdl(LX, 10,  LX_), mdl(LY, 10,  LY_),
+    concat_list(["|", LX_, LY_, "|", Result], Row).
 %
 center([Head|Tail], LX, LY, Row):- 
     not(Head is 0), 
     successor(LY, LY1), center(Tail, LX, LY1, Result),
-    concat_list(["|", LX, " ", LY, "|", Result], Row).
+    mdl(LX, 10, LX_), mdl(LY, 10,  LY_),
+    concat_list(["|", LX_, " ", LY_, "|", Result], Row).
 %
 center([Head|Tail], LX, LY, Row):- 
     Head is 0, successor(LY, LY1),
