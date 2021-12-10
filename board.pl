@@ -35,7 +35,11 @@ lower_at([Head|Tail], I, H, Higher):-
     ).
 % da el board en forma de array bidimensional 
 board(OnGameCells, NewBoard):-
-    get_converted_cells(OnGameCells, Cells), 
+    get_converted_cells(OnGameCells, Cells1), 
+
+    empty_neighbours(OnGameCells, [], OnGameCells, Free_Cells),
+    maplist(add_empty_type, Free_Cells, EmptyCells), append(Cells1, EmptyCells, Cells),
+
     nth0(0, Cells, Tupla1), nth0(0, Tupla1, W1), nth0(1, Tupla1, H1), 
     higher_at(Cells, 0, W1, Higher1), higher_at(Cells, 1, H1, Higher2),
     lower_at(Cells, 0, W1, Lower1), lower_at(Cells, 1, H1, Lower2),
