@@ -15,7 +15,7 @@
 :-write("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n\n").
 :-write("To start a new game, type init_game().\n").
 :-write("You can also type init_game(\"mode\")., where mode is one of the following:\n").
-:-write_all(["two_players", "vs_ia", "ia_vs_ia"]).
+:-write_all(["two_players", "vs_ia"]).
 
 init_game():-
   init_game("two_players").
@@ -33,10 +33,6 @@ init_game("vs_ia"):-
   show_board(Player1_R, Player2_R),
   game_vs_ia(Player1_R,Player2_R, 2).
 
-init_game("ia_vs_ia"):-
-  players(Player1,Player2),
-  first_two_places(Player1,Player2,Player1_R,Player2_R),
-  game(Player1_R,Player2_R, 2).
 
 game(Player1,Player2, Turn):-
   write("Turn Player-1:\n"),
@@ -57,10 +53,12 @@ game(Player1,Player2, Turn):-
 game_vs_ia(Player1, Player2, Turn):-
   write("Turn Player-1:\n"),
   turn_player1(Turn, Player1, Player2, NewPlayer11, NewPlayer21),
+  write("abbbber\n"),
   unblock(NewPlayer11, UNewPlayer11), unblock(NewPlayer21, UNewPlayer21),
   show_board(UNewPlayer11, UNewPlayer21),
   game_states(UNewPlayer11, UNewPlayer21), 
   
+
   turn_ia(Turn, UNewPlayer11, UNewPlayer21, NewPlayer22, NewPlayer12),
   unblock(NewPlayer12, UNewPlayer12), unblock(NewPlayer22, UNewPlayer22),
   show_board(UNewPlayer12, UNewPlayer22),
@@ -76,10 +74,19 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
   ( % caso ia
   (
   Raw_input = "ia",
-  minimax(2, Player1, Player2, BestMove), BestMove = [MyValue, OppValue, MyMove, _],
-  printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
-  commit_movement(Player1, Player2, MyMove, NewPlayer1),
-  NewPlayer2 = Player2
+  minimax(2, Player1, Player2, BestMove),
+    (
+      ( % caso sin movimientos válidos, pasar turno
+        BestMove = [], NewPlayer1 = Player1, NewPlayer2 = Player2
+      );
+        
+      ( % caso con al menos un movimiento válido
+        BestMove = [MyValue, OppValue, MyMove, _],
+        printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
+        commit_movement(Player1, Player2, MyMove, NewPlayer1),
+        NewPlayer2 = Player2  
+      )  
+    )
   );
 
   (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
@@ -123,11 +130,21 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
   split_string(Raw_input,"\s","\s",Input),
   
   ( % caso ia 
-  (Raw_input = "ia",
-  minimax(2, Player2, Player1, BestMove), BestMove = [MyValue, OppValue, MyMove, _],
-  printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
-  commit_movement(Player2, Player1, MyMove, NewPlayer2),
-  NewPlayer1 = Player1
+  (
+    Raw_input = "ia",
+    minimax(2, Player2, Player1, BestMove), 
+    (
+      ( % caso sin movimientos posibles
+        BestMove = [], NewPlayer2 = Player2, NewPlayer1 = Player1  
+      );
+      
+      ( % caso con al menos 1 movimiento válido
+        BestMove = [MyValue, OppValue, MyMove, _],
+        printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
+        commit_movement(Player2, Player1, MyMove, NewPlayer2),
+        NewPlayer1 = Player1
+        )  
+      )
   );
 
   (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
@@ -167,6 +184,7 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
   ).
 
 first_placed_ia(PlayerIA, NewPlayerIA, Hex):-
+  % random_member(Type, ["ant", "spider", "queen", "beetle", "grasshoper", "ladybug", "pillbug", "mosquito"]),
   new_hex("queen", 1, 1, 1, 0, 1, 0, Hex),
   find_queen(1, PlayerIA, QueenHex),
   find_hex(QueenHex, PlayerIA, 0, Pos),
@@ -176,6 +194,7 @@ second_placed_ia(PlayerHex, PlayerIA, NewPlayerIA):-
   get_row(PlayerHex, Row), get_col(PlayerHex, Col),
   adjacents(X, Y, Row, Col),
   find_free_bug("queen", PlayerIA, 0, Pos),
+  % random_member(Type, ["ant", "spider", "queen", "beetle", "grasshoper", "ladybug", "pillbug", "mosquito"]),
   new_hex("queen", X, Y, 2, 0, 1, 0, NewHex),
   replace_nth0(PlayerIA, Pos, _, NewHex, NewPlayerIA).
   
@@ -183,10 +202,18 @@ second_placed_ia(PlayerHex, PlayerIA, NewPlayerIA):-
 
 turn_ia(_, Player, PlayerIA, NewPlayerIA, NewPlayer):-
   write("\nPlease, press Enter to finish your turn\n"), read_line_to_string(user_input,_),
-  minimax(2, PlayerIA, Player, BestMove), BestMove = [MyValue, OppValue, MyMove, _],
-  printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
-  commit_movement(PlayerIA, Player, MyMove, NewPlayerIA),
-  NewPlayer = Player.
+  minimax(2, PlayerIA, Player, BestMove),
+  (
+    (
+      BestMove = [], NewPlayerIA = PlayerIA, NewPlayer = Player  
+    );
+    (
+      BestMove = [MyValue, OppValue, MyMove, _],
+      printall(["Best \"possible\" move, with a value of", [MyValue, OppValue], "is", MyMove]),
+      commit_movement(PlayerIA, Player, MyMove, NewPlayerIA),
+      NewPlayer = Player
+    )  
+  ).
 
 
 first_two_places(Player1,Player2,Player1_R,Player2_R):-

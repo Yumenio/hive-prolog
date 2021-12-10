@@ -14,7 +14,7 @@
     can_move/4, game_states/2, add_empty_type/2,
 
     there_is_a_path/3,
-    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7
+    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7, buried/2, two_common_of_height_two/3
     ]).
 
 can_move(Hex1, X1, Y1, OnGameCells):-
@@ -479,24 +479,6 @@ onGame_adjacents(X, Y, OnGameCellsCoordinates, AdjX, AdjY):-
     member([X, Y], OnGameCellsCoordinates).
 
 
-can_move(Hex1, X1, Y1, OnGameCells):-
-    length(OnGameCells, L),
-    get_all(Hex1, T, X, Y, C, _, _, B), B is 0,
-    queen_on_game(OnGameCells, C),
-    neighbours(Hex1, OnGameCells, Nbs), !,
-    nth0(0, Nbs, Nb),
-    get_all(Nb, _, Nb_x, Nb_y, _, _, _, _),
-    new_hex(T, X, Y, C, 0, 0, 0, New_Hex),
-    find_hex(Hex1, OnGameCells, 0, Pos),
-    replace_nth0(OnGameCells, Pos, _, New_Hex, OG),
-    % onGameSingle(OG, OGC),
-    include(is_on_game(), OG, OGC),
-    maplist(get_coordinates, OGC, OGCoor),
-    cc_bfs( [Nb_x, Nb_y] , OGCoor, CC),
-    length(CC, CCNodes), CCNodes is L-1,
-    have_adjacent(X1, Y1, OnGameCells). 
-
-
 move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
     find_hex([X, Y], OnGameCells, Hex),
@@ -510,3 +492,16 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "pillbug", pillbug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "mosquito", mosquito_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
+
+
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    two_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+
+one_common_of_height_two([[X, Y]|_], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    not(member([X, Y], Analized)), Height > 0.
+one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
