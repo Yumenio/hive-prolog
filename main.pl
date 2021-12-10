@@ -53,7 +53,6 @@ game(Player1,Player2, Turn):-
 game_vs_ia(Player1, Player2, Turn):-
   write("Turn Player-1:\n"),
   turn_player1(Turn, Player1, Player2, NewPlayer11, NewPlayer21),
-  write("abbbber\n"),
   unblock(NewPlayer11, UNewPlayer11), unblock(NewPlayer21, UNewPlayer21),
   show_board(UNewPlayer11, UNewPlayer21),
   game_states(UNewPlayer11, UNewPlayer21), 
@@ -88,10 +87,8 @@ turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2):-
       )  
     )
   );
-
-  (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
-  write("Player1:\n"), write_all(OGPlayer1), write("Player2:\n"), write_all(OGPlayer2),
-  turn_player1(Turn, Player1, Player2, NewPlayer1, NewPlayer2));
+  % pasar turno
+  (Raw_input = "pass", NewPlayer1 = Player1, NewPlayer2 = Player2);
 
   % caso poner ficha
   (length(Input,L1), L1 is 3,
@@ -147,9 +144,8 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
       )
   );
 
-  (Raw_input = "pp", include(is_on_game, Player1, OGPlayer1), include(is_on_game, Player2, OGPlayer2),
-  write("Player2:\n"), write_all(OGPlayer2), write("Player1:\n"), write_all(OGPlayer1),
-  turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1));
+  % para pasar turno
+  (Raw_input = "pass", NewPlayer1 = Player1, NewPlayer2 = Player2);
 
   % caso poner ficha
   (length(Input,L1), L1 is 3,

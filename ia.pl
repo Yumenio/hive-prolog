@@ -274,10 +274,11 @@ commit_movement(Player, _, ["place", Type, [X, Y]], Player_R):-
   new_hex(Type, X, Y, Color, 0, 1, 2, NewHex),
   replace_nth0(Player, Index, _, NewHex, Player_R).
 
-commit_movement(Player, Opponent, Movement, _):-
-  write("\nCOULD NOT COMMIT THE MOVEMENT\n"),
-  onGameCells(Player, Opponent, OnGameCells),
-  printall([OnGameCells, "\n", "Trying to do:", Movement]).
+commit_movement(_, _, _, _).
+% commit_movement(Player, Opponent, Movement, _):-
+%  write("\nCOULD NOT COMMIT THE MOVEMENT\n"),
+%  onGameCells(Player, Opponent, OnGameCells),
+%  printall([OnGameCells, "\n", "Trying to do:", Movement]).
 
 opponent_color(1, 2).
 opponent_color(2, 1).

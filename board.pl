@@ -38,7 +38,6 @@ board(OnGameCells, NewBoard):-
     get_converted_cells(OnGameCells, Cells1), 
 
     empty_neighbours(OnGameCells, [], OnGameCells, Free_Cells),
-    write_all([Cells1, Free_Cells]),
     maplist(add_empty_type, Free_Cells, EmptyCells), append(Cells1, EmptyCells, Cells),
 
     nth0(0, Cells, Tupla1), nth0(0, Tupla1, W1), nth0(1, Tupla1, H1), 
