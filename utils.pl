@@ -11,7 +11,7 @@
     adjacents/4, adjacents/2, players/2, is_on_game/1, onGameCells/3, cc_bfs/3,
     find_free_bug/4, valid_place/2, free_bug_place/3, find_hex/4, find_hex/3,
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3, queen_count/3,
-    can_move/4, game_states/2,
+    can_move/4, game_states/2, add_empty_type/2,
 
     there_is_a_path/3,
     find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7
@@ -168,6 +168,8 @@ convert_cells(hex(Type, Row, Col, Color, _, _, _), Converted_Hex):-
 get_converted_cells(Cells, Converted_Cells):-
     check_for_highests(Cells, Cells, CC),
     maplist(convert_cells, CC, Converted_Cells).
+
+
 
 check_coordinates(X, Y, hex(_, Row, Col, _, _, _, _)):-
     Row is X, Col is Y.
@@ -397,6 +399,7 @@ parse_input_special(Raw_input, R1, C1, R2, C2, R3, C3):-
     atom_number(R_3,R3),
     atom_number(C_3,C3).
 
+add_empty_type([X, Y], [X, Y, "  "]).
 
 find_depth_paths(OnGameCells, X, Y, Depth, Paths):-
     empty_neighbours(OnGameCells, [], OnGameCells, Free_Cells),
@@ -422,7 +425,7 @@ queen_count([Hex|Tail], OG, Count):-
     queen_count(Tail, OG, C2), 
     Count is C1 + C2.
 
-queen_count_aux(hex("queen", Row, Col, _, _, _, _), OG, Count):-
+queen_count_aux(hex("queen", Row, Col, _, _, 1, _), OG, Count):-
     findall([X, Y], occupied_adjacent(X, Y, OG, Row, Col), Bag),
     length(Bag, Count).
 
@@ -431,7 +434,7 @@ queen_count_aux(_, _, 0).
 game_states(Player1, Player2):-
     onGameCells(Player1, Player2, OG),
     queen_count(Player1, OG, C1),
-    queen_count(Player2, OG, C2),
+    queen_count(Player2, OG, C2), 
     C1 is 6, C2 is 6, write("Draw\n"), abort().
 
 game_states(Player1, Player2):-

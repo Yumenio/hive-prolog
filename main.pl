@@ -43,13 +43,13 @@ game(Player1,Player2, Turn):-
   turn_player1(Turn, Player1, Player2, NewPlayer11, NewPlayer21),
   unblock(NewPlayer11, UNewPlayer11), unblock(NewPlayer21, UNewPlayer21),
   show_board(UNewPlayer11, UNewPlayer21),
-  game_states(UNewPlayer11, UNewPlayer21),
+  game_states(UNewPlayer11, UNewPlayer21), 
 
   write("Turn Player-2:\n"),
   turn_player2(Turn, UNewPlayer11, UNewPlayer21, NewPlayer22, NewPlayer12),
   unblock(NewPlayer12, UNewPlayer12), unblock(NewPlayer22, UNewPlayer22),
   show_board(UNewPlayer12, UNewPlayer22),
-  game_states(UNewPlayer12, UNewPlayer22),
+  game_states(UNewPlayer12, UNewPlayer22), 
   
   successor(Turn, Turn1),
   game(UNewPlayer12, UNewPlayer22, Turn1).
@@ -58,15 +58,13 @@ game_vs_ia(Player1, Player2, Turn):-
   write("Turn Player-1:\n"),
   turn_player1(Turn, Player1, Player2, NewPlayer11, NewPlayer21),
   unblock(NewPlayer11, UNewPlayer11), unblock(NewPlayer21, UNewPlayer21),
-  onGameCells(UNewPlayer11, UNewPlayer21, OG1),
-  queen_count(UNewPlayer11, OG1, Count1), write("la reina blanca esta rodeada por: "), write(Count1), write("\n"),
   show_board(UNewPlayer11, UNewPlayer21),
+  game_states(UNewPlayer11, UNewPlayer21), 
   
   turn_ia(Turn, UNewPlayer11, UNewPlayer21, NewPlayer22, NewPlayer12),
   unblock(NewPlayer12, UNewPlayer12), unblock(NewPlayer22, UNewPlayer22),
-  onGameCells(UNewPlayer11, UNewPlayer21, OG2),
-  queen_count(UNewPlayer21, OG2, Count2), write("la reina blanca esta rodeada por: "), write(Count2), write("\n"),
   show_board(UNewPlayer12, UNewPlayer22),
+  game_states(UNewPlayer12, UNewPlayer22), 
   
   successor(Turn, Turn1),
   game_vs_ia(UNewPlayer12, UNewPlayer22, Turn1).
