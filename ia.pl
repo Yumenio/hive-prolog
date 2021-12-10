@@ -189,7 +189,7 @@ evaluate_after_before_placement(PlayerBefore, OpponentBefore, PlayerAfter, Oppon
       )
       ;
       (
-          Value is 0.5 + ( BeforePlayerCount - AfterPlayerCount) + ( AfterOpponentCount - BeforeOpponentCount) + (AfterPlayerUnstuck - BeforePlayerUnstuck) + (BeforeOpponentUnstuck - AfterOpponentUnstuck)
+          Value is 1 + ( BeforePlayerCount - AfterPlayerCount) + ( AfterOpponentCount - BeforeOpponentCount) + (AfterPlayerUnstuck - BeforePlayerUnstuck) + (BeforeOpponentUnstuck - AfterOpponentUnstuck)
       )
   ).
 
