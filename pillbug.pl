@@ -21,6 +21,7 @@ pillbug_special(PillbugHex, MovingHex, X, Y, Player, Opponent, Player_R):-
 
 pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
     get_all(PillbugHex, _, Row, Col, _, Height, _, Blocked),
+    find_hex([X, Y], OnGameCells, CarriedHex), get_height(CarriedHex, 0),
     maplist(get_coordinates, OnGameCells, OnGameCellsCoor),
     Height is 0, % the hex being moved cannot be part of a stack of pieces
     Blocked is 0, % the pillbug cannot move the last cell the opponent moved
@@ -28,16 +29,3 @@ pillbug_can_carry(PillbugHex, [X, Y], OnGameCells):-
     findall([X2, Y2], onGame_adjacents(X2, Y2, OnGameCellsCoor, X, Y), Adj2),
     intersection(Adj1, Adj2, CommonAdjs),
     not(two_common_of_height_two(CommonAdjs, OnGameCells, [])).
-
-
-two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
-    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
-    Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
-two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
-    two_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
-
-one_common_of_height_two([[X, Y]|_], OnGameCells, Analized):-
-    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
-    not(member([X, Y], Analized)), Height > 0.
-one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
-    one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).

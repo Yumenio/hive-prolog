@@ -15,7 +15,7 @@
 :-write("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾\n\n").
 :-write("To start a new game, type init_game().\n").
 :-write("You can also type init_game(\"mode\")., where mode is one of the following:\n").
-:-write_all(["two_players", "vs_ia", "ia_vs_ia"]).
+:-write_all(["two_players", "vs_ia"]).
 
 init_game():-
   init_game("two_players").
@@ -183,6 +183,7 @@ turn_player2(Turn, Player1, Player2, NewPlayer2, NewPlayer1):-
   ).
 
 first_placed_ia(PlayerIA, NewPlayerIA, Hex):-
+  % random_member(Type, ["ant", "spider", "queen", "beetle", "grasshoper", "ladybug", "pillbug", "mosquito"]),
   new_hex("queen", 1, 1, 1, 0, 1, 0, Hex),
   find_queen(1, PlayerIA, QueenHex),
   find_hex(QueenHex, PlayerIA, 0, Pos),
@@ -192,6 +193,7 @@ second_placed_ia(PlayerHex, PlayerIA, NewPlayerIA):-
   get_row(PlayerHex, Row), get_col(PlayerHex, Col),
   adjacents(X, Y, Row, Col),
   find_free_bug("queen", PlayerIA, 0, Pos),
+  % random_member(Type, ["ant", "spider", "queen", "beetle", "grasshoper", "ladybug", "pillbug", "mosquito"]),
   new_hex("queen", X, Y, 2, 0, 1, 0, NewHex),
   replace_nth0(PlayerIA, Pos, _, NewHex, NewPlayerIA).
   

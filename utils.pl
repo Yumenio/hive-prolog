@@ -13,7 +13,7 @@
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3,
 
     there_is_a_path/3,
-    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7, buried/2
+    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7, buried/2, two_common_of_height_two/3
     ]).
 print_hex_board(Player_1, Player_2):-
     include(is_on_game(), Player_1, Player1),
@@ -456,3 +456,16 @@ move_hex(X, Y, X1, Y1, Player, Opponent, Player_R):-
     (T = "pillbug", pillbug_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "mosquito", mosquito_move(Hex, X1, Y1, Player, Opponent, Player_R));
     (T = "spider", spider_move(Hex, X1, Y1, Player, Opponent, Player_R))).
+
+
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    Height > 0, one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+two_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    two_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
+
+one_common_of_height_two([[X, Y]|_], OnGameCells, Analized):-
+    find_hex([X, Y], OnGameCells, hex(_,_,_,_,Height,_,_)),
+    not(member([X, Y], Analized)), Height > 0.
+one_common_of_height_two([[X, Y]|T], OnGameCells, Analized):- 
+    one_common_of_height_two(T, OnGameCells, [[X, Y]|Analized]).
