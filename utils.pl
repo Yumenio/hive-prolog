@@ -13,7 +13,7 @@
     find_all_at/3, neighbours/3, print_hex_board/2, true_path/3,
 
     there_is_a_path/3,
-    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7
+    find_queen/3, onGame_adjacents/5, can_move/4, move_hex/7, buried/2
     ]).
 print_hex_board(Player_1, Player_2):-
     include(is_on_game(), Player_1, Player1),
