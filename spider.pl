@@ -1,5 +1,6 @@
 :- module(spider, [spider_move/6, spider_path/3]).
 :- use_module(utils).
+:- use_module(dfs).
 
 spider_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),

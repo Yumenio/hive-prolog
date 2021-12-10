@@ -1,4 +1,3 @@
-:- use_module(board).
 :- use_module(utils).
 :- use_module(queen).
 :- use_module(beetle).
@@ -8,7 +7,6 @@
 :- use_module(ladybug).
 :- use_module(grasshoper).
 :- use_module(mosquito).
-:- use_module(dfs).
 
 first_placed(Player1,Player1_R,Hex):-
     read_line_to_string(user_input,Raw_input),
@@ -432,6 +430,3 @@ commit_movement(Player, Opponent, Movement, _):-
 
 opponent_color(1, 2).
 opponent_color(2, 1).
-
-test([_, _], Player, Oponent):-
-    playerMovements(Player, Oponent, Allmovements), write_all(Allmovements).

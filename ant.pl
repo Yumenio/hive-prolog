@@ -1,5 +1,6 @@
 :- module(ant, [ant_move/6, ant_path/3]).
 :- use_module(utils).
+:- use_module(dfs).
 
 ant_move(Hex1, X, Y, Player, Opponent, Player_R):-
     onGameCells(Player, Opponent, OnGameCells),
